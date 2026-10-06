@@ -1,1 +1,90 @@
 # python-review-interview
+
+Python 코드 리뷰 인터뷰를 준비하기 위한 한국어 학습 자료입니다. Junior부터 Intermediate, Expert까지 문법, 스타일, 흔한 실수, 실무 설계, 고급 기능을 다루며, 코드 예제와 해설이 있는 실전 문제를 제공합니다.
+
+현재 Claude와 Codex 두 버전의 HTML 프레젠테이션을 포함합니다. 각 버전은 브라우저에서 바로 열 수 있는 독립 실행 파일입니다.
+
+## GitHub Pages에서 보기
+
+| 버전 | 페이지 경로 | 바로가기 | 저장소 문서 |
+| --- | --- | --- | --- |
+| Claude | `/python-review-interview/claude/` | [Claude 프레젠테이션 열기](https://jay-jang.github.io/python-review-interview/claude/) | [claude/README.md](claude/README.md) |
+| Codex | `/python-review-interview/codex/` | [Codex 프레젠테이션 열기](https://jay-jang.github.io/python-review-interview/codex/) | [codex/README.md](codex/README.md) |
+
+GitHub Pages의 기본 주소는 `https://jay-jang.github.io/python-review-interview/`입니다. 위 링크에서 원하는 버전으로 바로 접근할 수 있습니다.
+
+## 현재 프로젝트에 포함된 내용
+
+| 항목 | Claude | Codex |
+| --- | --- | --- |
+| 분량 | 102장 | 88장 |
+| 주요 내용 | Python 핵심 모델, Pythonic 관용구, 스타일 가이드, 흔한 실수, Best Practice, 고급 기능, Python 3.8~3.14 변화, 레벨별 리뷰 체크리스트 | Junior 핵심, 스타일과 계약, Intermediate 실무, 타입과 추상화, Expert 객체 모델, 동시성과 실행 모델, 운영 품질, 고급 기능과 종합 |
+| 실전 문제 | 출력 예측 16문항, 코드 리뷰 12문항 | 해설·수정안·테스트 포인트를 포함한 리뷰 문제 23문항 |
+| 학습 기능 | 목차, 슬라이드/스크롤 보기, 다크 모드 | 발표/학습 모드, 검색, 난이도·주제 필터, 상세 설명과 해설, 코드 복사, 인쇄, 리뷰 메모 저장 |
+
+공통으로 다음과 같은 리뷰 포인트를 학습할 수 있습니다.
+
+- 가변 기본 인자, 이름 바인딩, 객체의 동일성과 동등성 등 Python의 핵심 동작
+- 컴프리헨션, 제너레이터, 컨텍스트 매니저와 예외 처리
+- 네이밍, 타입 힌트, 문서화, 함수·클래스 설계와 테스트
+- 데코레이터, 디스크립터, 상속과 MRO 등 고급 객체 모델
+- 비동기 코드, 동시성, 캐시와 성능 관련 실수 및 개선 방향
+- 문제의 영향과 우선순위, 수정안, 검증할 테스트를 설명하는 리뷰 연습
+
+## 프로젝트 구조
+
+```text
+python-review-interview/
+├── README.md                 # 프로젝트 개요와 GitHub Pages 링크
+├── .nojekyll                 # GitHub Pages에서 정적 파일을 그대로 제공
+├── claude/
+│   ├── README.md             # Claude 버전 안내
+│   ├── index.html            # 102장 프레젠테이션
+│   └── source/
+│       ├── build.py          # 코드 하이라이팅 및 HTML 생성
+│       ├── template.html     # 화면 스타일과 프레젠테이션 기능
+│       └── src/*.html        # 주제별 슬라이드 원본
+└── codex/
+    ├── README.md             # Codex 버전 안내
+    └── index.html            # 88장 프레젠테이션
+```
+
+## 로컬에서 보기
+
+저장소를 내려받은 뒤 `claude/index.html` 또는 `codex/index.html`을 브라우저에서 열면 됩니다. 프레젠테이션 열람에는 별도 패키지 설치가 필요하지 않습니다.
+
+```bash
+git clone https://github.com/jay-jang/python-review-interview.git
+cd python-review-interview
+```
+
+로컬 HTTP 서버로도 볼 수 있습니다.
+
+```bash
+python3 -m http.server 8000
+```
+
+- Claude: <http://localhost:8000/claude/>
+- Codex: <http://localhost:8000/codex/>
+
+### 조작 방법
+
+- Claude: `←` / `→` 이동, `T` 목차, `S` 슬라이드/스크롤 보기 전환, `D` 다크 모드
+- Codex: `←` / `→` 이동, `/` 검색, `Home` / `End` 처음·끝 이동. 화면 버튼으로 발표/학습 모드를 전환하고 설명·해설을 펼칠 수 있습니다.
+
+## Claude 프레젠테이션 다시 빌드하기
+
+Claude 버전의 내용은 `claude/source/src/*.html`에서, 스타일과 화면 기능은 `claude/source/template.html`에서 수정합니다. 다음 명령은 저장소 루트에서 실행합니다.
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install pygments
+python3 claude/source/build.py claude/index.html
+```
+
+Codex 버전은 별도 빌드 스크립트 없이 `codex/index.html`을 직접 수정합니다.
+
+## GitHub Pages 배포
+
+현재 GitHub Pages는 `main` 브랜치의 루트(`/`)를 게시 대상으로 사용합니다. 변경 사항을 `main`에 push하면 GitHub Pages 빌드를 거쳐 `/claude/`, `/codex/` 경로에 반영됩니다.
