@@ -1,0 +1,266 @@
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>asyncio 리뷰 포인트 (1) — 이벤트 루프를 막지 마라</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      async def handler(request):
+          user = requests.get(f"{API}/users/{request.id}")   # 블로킹 HTTP
+          time.sleep(1)                                        # 루프 전체 정지
+          data = json.loads(open("big.json").read())           # 블로킹 파일 I/O
+          digest = bcrypt.hashpw(pw, salt)                     # CPU 바운드
+          fetch_profile(user)                                  # await 누락!
+          return data
+      </py>
+      <ul class="small">
+        <li>async 함수 안의 동기 블로킹 호출은 <b>모든</b> 동시 요청을 멈춥니다</li>
+        <li><code>await</code> 누락 → 코루틴이 실행되지 않음 ("coroutine was never awaited" RuntimeWarning)</li>
+      </ul>
+    </div>
+    <div>
+      <py good>
+      async def handler(request, client: httpx.AsyncClient):
+          resp = await client.get(f"{API}/users/{request.id}", timeout=5)
+          await asyncio.sleep(1)
+          data = await asyncio.to_thread(load_json, "big.json")      # 스레드로 위임
+          loop = asyncio.get_running_loop()
+          digest = await loop.run_in_executor(process_pool, hash_pw, pw)
+          profile = await fetch_profile(resp.json())
+          return data
+      </py>
+      <div class="box tip"><b>탐지 방법</b> <code>PYTHONASYNCIODEBUG=1</code> 또는 <code>asyncio.run(main(), debug=True)</code> → 100ms 넘게 루프를 막는 콜백을 경고. 클라이언트(<code>AsyncClient</code>, DB 풀)는 요청마다 만들지 말고 재사용.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>asyncio 리뷰 포인트 (2) — 태스크 수명, 취소, 동시성 제한</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      async def main(urls):
+          for u in urls:
+              asyncio.create_task(fetch(u))    # 참조를 버림 → GC 로 사라질 수 있음
+                                               # 예외도 조용히 유실
+          results = await asyncio.gather(*(fetch(u) for u in urls))
+          # 10만 개 URL 을 동시에 → 소켓 고갈, 상대 서버 DoS
+
+      async def worker():
+          try:
+              await job()
+          except Exception:                    # 3.8+: CancelledError 는 BaseException
+              ...
+          except BaseException:                # 취소를 삼키면 종료가 안 됨
+              pass
+      </py>
+    </div>
+    <div>
+      <py good>
+      async def main(urls: list[str]) -> list[bytes]:
+          sem = asyncio.Semaphore(20)                  # 동시성 제한
+
+          async def bounded(u: str) -> bytes:
+              async with sem:
+                  async with asyncio.timeout(10):      # 3.11+
+                      return await fetch(u)
+
+          async with asyncio.TaskGroup() as tg:        # 3.11+ 구조적 동시성
+              tasks = [tg.create_task(bounded(u)) for u in urls]
+          # 하나라도 실패하면 나머지 취소 + ExceptionGroup
+          return [t.result() for t in tasks]
+      </py>
+      <ul class="small">
+        <li>fire-and-forget이 필요하면 태스크를 집합에 보관하고 <code>add_done_callback(set.discard)</code></li>
+        <li><code>gather(return_exceptions=True)</code>는 예외를 결과 리스트에 섞음 → 반드시 검사</li>
+        <li><code>CancelledError</code>를 잡았다면 정리 후 <b>다시 raise</b></li>
+        <li>async 코드에서 공유 상태는 <code>await</code> 지점 사이에서만 원자적 → await를 사이에 둔 read-modify-write는 <code>asyncio.Lock</code></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>contextvars, 스레드 로컬, 전역 상태</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ async 에서 threading.local 로 요청 컨텍스트 저장">
+      _local = threading.local()
+      async def handle(req):
+          _local.request_id = req.id      # 같은 스레드의 다른 태스크와 섞임
+          await process()
+      </py>
+      <py good>
+      from contextvars import ContextVar
+      request_id: ContextVar[str | None] = ContextVar("request_id", default=None)
+
+      async def handle(req):
+          token = request_id.set(req.id)
+          try:
+              await process()             # 이 태스크와 자식 태스크에만 보임
+          finally:
+              request_id.reset(token)
+
+      class RequestIdFilter(logging.Filter):
+          def filter(self, record):
+              record.request_id = request_id.get()
+              return True
+      </py>
+    </div>
+    <div>
+      <div class="box"><b>왜 중요한가</b> asyncio는 한 스레드에서 수많은 태스크를 번갈아 실행합니다. 태스크는 생성 시점의 컨텍스트 <b>복사본</b>을 가지므로 <code>ContextVar</code>는 태스크별로 격리됩니다. <code>asyncio.to_thread</code>도 컨텍스트를 전파합니다.</div>
+      <div class="box warn"><b>모듈 전역 가변 상태의 문제</b><br>• 테스트 간 오염 (순서에 따라 실패)<br>• 멀티스레드/free-threading에서 경쟁 조건<br>• 워커 프로세스마다 따로 존재 (gunicorn 등) → "캐시가 안 맞아요" 버그<br>→ 리뷰 시 "이 상태는 누가 소유하고, 수명은 얼마이며, 동시에 접근하나?"를 질문</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>성능: 측정 먼저, 그 다음 알고리즘</h2>
+  <div class="cols">
+    <div>
+      <ol>
+        <li><b>측정</b>: <code>cProfile</code> + <code>snakeviz</code>, 운영 환경은 샘플링 프로파일러 <code>py-spy</code>, 마이크로 벤치마크는 <code>timeit</code>. 3.12+는 Linux <code>perf</code> 프로파일러 연동 지원.</li>
+        <li><b>알고리즘/자료구조</b>: O(n²) → O(n log n)이 어떤 미세 최적화보다 큼</li>
+        <li><b>I/O 패턴</b>: N+1 쿼리, 배치 처리, 커넥션 재사용</li>
+        <li><b>내장 함수/C 구현 활용</b>: <code>sum</code>, <code>sorted</code>, <code>str.join</code>, <code>set</code> 연산, <code>collections</code></li>
+        <li><b>벡터화</b>: NumPy/pandas/Polars에서 Python 루프 제거</li>
+        <li>그래도 부족하면: 캐싱, 멀티프로세싱, Cython/Rust(PyO3), PyPy</li>
+      </ol>
+      <py lang="sh" cap="프로파일링 명령">
+      $ python -m cProfile -s cumtime app.py
+      $ python -m timeit -s "xs=list(range(1000))" "sum(xs)"
+      $ py-spy top --pid 12345
+      </py>
+    </div>
+    <div>
+      <py bad cap="❌ ORM N+1 / 루프 내 반복 계산">
+      for order in Order.objects.all():          # 1 쿼리
+          print(order.customer.name)             # + N 쿼리
+      for row in rows:
+          if re.match(r"\d{4}-\d{2}", row):      # 캐시되지만 매번 조회 비용
+              ...
+          total += len(rows)                     # 루프 불변식
+      </py>
+      <py good>
+      for order in Order.objects.select_related("customer"):
+          print(order.customer.name)
+      DATE_RE = re.compile(r"\d{4}-\d{2}")       # 모듈 레벨 컴파일
+      n = len(rows)
+      </py>
+      <div class="box warn"><b>과잉 최적화도 리뷰 대상</b> 측정 근거 없이 가독성을 해치는 트릭(지역 변수 바인딩 <code>append = lst.append</code>, 비트 연산 꼼수)은 오히려 지적합니다. 3.11+ 적응형 인터프리터(PEP 659)가 많은 미세 최적화를 무의미하게 만들었습니다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>보안 리뷰 (1): 인젝션과 역직렬화</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      # SQL 인젝션
+      cur.execute(f"SELECT * FROM users WHERE name = '{name}'")
+      # 셸 인젝션
+      subprocess.run(f"convert {filename} out.png", shell=True)
+      os.system("rm -rf " + path)
+      # 임의 코드 실행
+      value = eval(request.args["expr"])
+      obj = pickle.loads(request.body)          # 신뢰할 수 없는 데이터
+      cfg = yaml.load(text)                     # 임의 객체 생성 가능 (Loader 미지정)
+      # 경로 순회
+      open(os.path.join(UPLOAD_DIR, request.args["file"]))   # ../../etc/passwd
+      tar.extractall(dest)                      # 압축 내부 ../ 경로
+      </py>
+    </div>
+    <div>
+      <py good>
+      cur.execute("SELECT * FROM users WHERE name = %s", (name,))   # 파라미터 바인딩
+      subprocess.run(["convert", filename, "out.png"], check=True, timeout=30)
+      value = ast.literal_eval(expr)            # 리터럴만 (또는 전용 파서)
+      obj = json.loads(request.body)            # + 스키마 검증 (pydantic)
+      cfg = yaml.safe_load(text)
+
+      base = Path(UPLOAD_DIR).resolve()
+      target = (base / user_file).resolve()
+      if not target.is_relative_to(base):       # 3.9+
+          raise PermissionError("path traversal")
+      tar.extractall(dest, filter="data")       # 3.12+ (3.14 기본값)
+      </py>
+      <div class="box">XML은 <code>defusedxml</code>(XXE·billion laughs 방지). 템플릿 엔진에 사용자 입력으로 템플릿을 만들면 SSTI. <code>ast.literal_eval</code>도 거대한 입력엔 CPU/메모리 고갈 가능 → 크기 제한.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>보안 리뷰 (2): 비밀정보, 암호, 네트워크</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      token = "".join(random.choices(string.ascii_letters, k=32))   # 예측 가능
+      if provided_sig == expected_sig: ...       # 타이밍 공격
+      hashlib.md5(password.encode()).hexdigest() # 비밀번호 해시로 부적합
+      requests.get(url, verify=False)            # MITM
+      DEBUG = True                               # 운영 배포
+      log.info("login %s / %s", user, password)
+      tempfile.mktemp()                          # 경쟁 조건 (deprecated)
+      </py>
+    </div>
+    <div>
+      <py good>
+      import secrets, hmac
+      token = secrets.token_urlsafe(32)
+      if hmac.compare_digest(provided_sig, expected_sig): ...
+      # 비밀번호: argon2-cffi / bcrypt / hashlib.scrypt (솔트 + 느린 KDF)
+      with tempfile.NamedTemporaryFile(delete=False) as f: ...
+      </py>
+      <div class="box warn"><b>Expert 체크리스트</b><br>• 비밀은 환경변수/시크릿 매니저, 저장소에 커밋 금지 (gitleaks)<br>• 외부 요청엔 timeout, 응답 크기 제한<br>• SSRF: 사용자 URL을 서버가 요청할 때 내부 IP 차단<br>• 의존성 고정 + <code>pip-audit</code>, 해시 검증 (<code>--require-hashes</code>)<br>• 정규식 ReDoS: 중첩 수량자 <code>(a+)+</code><br>• 직렬화 응답에 내부 필드(비밀번호 해시) 노출 여부</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>패키징, 의존성, 공개 API 관리</h2>
+  <div class="cols">
+    <div>
+      <py lang="toml" cap="pyproject.toml (PEP 621) + src 레이아웃">
+      [project]
+      name = "acme-billing"
+      version = "1.4.0"
+      requires-python = ">=3.11"
+      dependencies = [
+          "httpx>=0.27,<1",
+          "pydantic>=2.6",
+      ]
+
+      [project.optional-dependencies]
+      dev = ["pytest", "ruff", "mypy"]
+
+      [project.scripts]
+      acme-billing = "acme_billing.cli:main"
+
+      [build-system]
+      requires = ["hatchling"]
+      build-backend = "hatchling.build"
+      </py>
+      <p class="small"><code>src/acme_billing/...</code> 구조는 설치하지 않은 로컬 코드가 실수로 import 되는 것을 막아줍니다.</p>
+    </div>
+    <div>
+      <ul>
+        <li><b>라이브러리</b>는 범위 지정(<code>&gt;=,&lt;</code>), <b>애플리케이션</b>은 락파일로 정확히 고정 (<code>uv.lock</code>, <code>poetry.lock</code>)</li>
+        <li><code>__all__</code>로 공개 API 명시, 내부는 <code>_</code> 접두사</li>
+        <li>공개 함수 시그니처 변경은 하위 호환성 이슈 → 키워드 전용 인자 추가는 안전, 위치 인자 순서 변경은 파괴적</li>
+        <li>폐기는 단계적으로:</li>
+      </ul>
+      <py>
+      import warnings
+
+      def old_api(x):
+          warnings.warn(
+              "old_api() is deprecated; use new_api()",
+              DeprecationWarning,
+              stacklevel=2,            # 호출자 위치를 가리키도록
+          )
+          return new_api(x)
+
+      # 3.13+: @warnings.deprecated("use new_api") 데코레이터 (PEP 702)
+      </py>
+    </div>
+  </div>
+</section>

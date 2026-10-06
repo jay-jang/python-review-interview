@@ -1,0 +1,275 @@
+<section class="slide divider" data-part="7. 고급 기능 (Expert)">
+  <div class="small">PART 7 · <span class="lv sr">Expert</span></div>
+  <h1>고급 기능과 내부 동작</h1>
+  <p class="lead">데코레이터 · 디스크립터 · 메타클래스 · MRO · 메모리 · GIL과 동시성 · asyncio · 성능 · 보안 · 패키징. Expert 리뷰어는 "언제 쓰지 말아야 하는지"까지 말합니다.</p>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>데코레이터: 올바르게 만들기</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ 메타데이터 유실, 반환값 유실">
+      def timed(func):
+          def wrapper(*args, **kwargs):
+              start = time.time()
+              func(*args, **kwargs)              # 반환값 버림!
+              print(func.__name__, time.time() - start)
+          return wrapper                          # __name__, __doc__ = wrapper
+      </py>
+      <py good cap="✅ wraps + ParamSpec 로 타입까지 보존">
+      import functools, time, logging
+      from collections.abc import Callable
+
+      def timed[**P, R](func: Callable[P, R]) -> Callable[P, R]:
+          @functools.wraps(func)
+          def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+              start = time.perf_counter()
+              try:
+                  return func(*args, **kwargs)
+              finally:
+                  log.debug("%s took %.4fs", func.__qualname__,
+                            time.perf_counter() - start)
+          return wrapper
+      </py>
+    </div>
+    <div>
+      <py cap="인자를 받는 데코레이터 (3단 중첩)">
+      def retry(times: int = 3, exceptions: tuple[type[Exception], ...] = (Exception,),
+                backoff: float = 0.5):
+          def decorator(func):
+              @functools.wraps(func)
+              def wrapper(*args, **kwargs):
+                  for attempt in range(1, times + 1):
+                      try:
+                          return func(*args, **kwargs)
+                      except exceptions:
+                          if attempt == times:
+                              raise
+                          time.sleep(backoff * 2 ** (attempt - 1))
+              return wrapper
+          return decorator
+
+      @retry(times=5, exceptions=(httpx.TransportError,))
+      def fetch(url: str) -> bytes: ...
+      </py>
+      <div class="box warn"><b>Expert 리뷰 포인트</b><br>• <code>@retry</code>를 비멱등(non-idempotent) 연산(결제, POST)에 붙이면 중복 실행<br>• async 함수에 동기 데코레이터 → 코루틴 객체만 반환, 시간 측정·재시도 무의미 (<code>inspect.iscoroutinefunction</code>으로 분기)<br>• 데코레이터는 import 시점에 실행 → 무거운 작업 금지<br>• 지터(jitter) 없는 지수 백오프는 thundering herd 유발</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>디스크립터 프로토콜</h2>
+  <div class="cols">
+    <div>
+      <p><code>__get__</code>/<code>__set__</code>/<code>__delete__</code>를 가진 객체를 <b>클래스 속성</b>으로 두면 속성 접근을 가로챕니다. <code>property</code>, <code>classmethod</code>, <code>staticmethod</code>, 함수(→ 바운드 메서드), <code>__slots__</code> 모두 디스크립터입니다.</p>
+      <py>
+      class Positive:
+          def __set_name__(self, owner, name):      # 3.6+: 속성 이름 자동 전달
+              self.private = f"_{name}"
+
+          def __get__(self, obj, objtype=None):
+              if obj is None:                       # 클래스에서 접근 시
+                  return self
+              return getattr(obj, self.private)
+
+          def __set__(self, obj, value):
+              if value <= 0:
+                  raise ValueError(f"{self.private[1:]} must be > 0")
+              setattr(obj, self.private, value)
+
+      class Order:
+          qty = Positive()
+          price = Positive()
+          def __init__(self, qty, price):
+              self.qty, self.price = qty, price
+
+      Order(0, 10)   # ValueError: qty must be > 0
+      </py>
+    </div>
+    <div>
+      <h3>속성 조회 우선순위</h3>
+      <ol>
+        <li><b>데이터 디스크립터</b> (<code>__set__</code> 또는 <code>__delete__</code> 있음, 예: property) — 클래스(MRO)</li>
+        <li><b>인스턴스 <code>__dict__</code></b></li>
+        <li><b>논데이터 디스크립터</b> (<code>__get__</code>만, 예: 함수, <code>cached_property</code>) 및 일반 클래스 속성</li>
+        <li><code>__getattr__</code> (위에서 모두 실패했을 때만)</li>
+      </ol>
+      <div class="box"><b>그래서</b> <code>cached_property</code>는 논데이터 디스크립터라, 첫 계산 후 인스턴스 <code>__dict__</code>에 값을 넣으면 다음부턴 디스크립터를 거치지 않습니다 — 빠른 이유.</div>
+      <div class="box warn"><b>리뷰 기준</b> 디스크립터는 ORM 필드, 검증 프레임워크처럼 <b>같은 패턴이 많은 클래스에 반복</b>될 때 가치가 있습니다. 한두 개 필드라면 <code>property</code>가 더 읽기 쉽습니다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>메타클래스 vs __init_subclass__ vs 클래스 데코레이터</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ 플러그인 등록에 메타클래스 (과한 도구)">
+      class RegistryMeta(type):
+          registry = {}
+          def __new__(mcs, name, bases, ns):
+              cls = super().__new__(mcs, name, bases, ns)
+              if bases:
+                  mcs.registry[ns.get("name", name)] = cls
+              return cls
+
+      class Plugin(metaclass=RegistryMeta): ...
+      </py>
+      <py good cap="✅ __init_subclass__ (3.6+) 로 충분">
+      class Plugin:
+          registry: dict[str, type["Plugin"]] = {}
+
+          def __init_subclass__(cls, /, name: str, **kwargs):
+              super().__init_subclass__(**kwargs)
+              if name in Plugin.registry:
+                  raise ValueError(f"duplicate plugin {name}")
+              Plugin.registry[name] = cls
+
+      class CsvExporter(Plugin, name="csv"): ...
+      class JsonExporter(Plugin, name="json"): ...
+      </py>
+    </div>
+    <div>
+      <div class="tablewrap"><table>
+        <tr><th>도구</th><th>쓸 때</th><th>단점</th></tr>
+        <tr><td>클래스 데코레이터</td><td>특정 클래스 하나 가공 (dataclass)</td><td>상속되지 않음</td></tr>
+        <tr><td><code>__init_subclass__</code></td><td>서브클래스 등록·검증 훅</td><td>클래스 생성 이후에만 개입</td></tr>
+        <tr><td><code>__set_name__</code></td><td>디스크립터가 이름 알기</td><td>—</td></tr>
+        <tr><td>메타클래스</td><td>클래스 생성 자체/네임스페이스 제어 (ORM, Enum, ABC)</td><td>메타클래스 충돌, 가독성 저하</td></tr>
+      </table></div>
+      <div class="box">"메타클래스는 99%의 사용자가 걱정할 필요 없는 깊은 마법이다. 필요한지 궁금하다면 필요 없는 것이다." — Tim Peters</div>
+      <div class="box warn"><b>메타클래스 충돌</b> 서로 다른 메타클래스를 가진 두 베이스를 다중 상속하면 <code>TypeError: metaclass conflict</code>. 예: ABC + Django Model 등.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>MRO와 협력적 다중 상속 (super)</h2>
+  <div class="cols">
+    <div>
+      <py>
+      class Base:
+          def __init__(self, **kw):
+              super().__init__(**kw)          # object 까지 체인 이어주기
+              print("Base")
+
+      class Logged(Base):
+          def __init__(self, *, log_name="app", **kw):
+              super().__init__(**kw)
+              self.log_name = log_name
+              print("Logged")
+
+      class Cached(Base):
+          def __init__(self, *, cache_size=128, **kw):
+              super().__init__(**kw)
+              self.cache_size = cache_size
+              print("Cached")
+
+      class Service(Logged, Cached):
+          pass
+
+      print([c.__name__ for c in Service.__mro__])
+      # ['Service', 'Logged', 'Cached', 'Base', 'object']
+      Service(log_name="svc", cache_size=10)   # Base → Cached → Logged 순 출력
+      </py>
+    </div>
+    <div>
+      <ul>
+        <li><b>C3 선형화</b>: 자식이 부모보다 먼저, 선언 순서 유지. <code>Cls.__mro__</code>로 확인.</li>
+        <li><code>super()</code>는 "부모"가 아니라 <b>MRO상 다음 클래스</b>. <code>Logged</code>의 <code>super()</code>는 <code>Service</code> 인스턴스에서는 <code>Cached</code>를 가리킵니다.</li>
+        <li>협력하려면 모두 <code>super()</code>를 호출하고 <code>**kwargs</code>를 넘겨야 합니다.</li>
+      </ul>
+      <py bad cap="❌ 직접 부모 호출 → 다이아몬드에서 Base 두 번 실행">
+      class Logged(Base):
+          def __init__(self):
+              Base.__init__(self)
+      </py>
+      <div class="box tip"><b>실무 권장</b> 다중 상속은 상태 없는 <b>믹스인</b> 정도로 제한하고, 그 외엔 조합(composition)을 선호.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>메모리 모델: 참조 카운팅, GC, __slots__, weakref</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>CPython은 <b>참조 카운팅</b>으로 대부분 즉시 해제 + <b>세대별 순환 GC</b>로 순환 참조 수거 (3.14: 증분 GC 도입)</li>
+        <li><code>__del__</code>은 실행 시점이 보장되지 않음 → 리소스 정리는 컨텍스트 매니저나 <code>weakref.finalize</code></li>
+        <li>PyPy 등 다른 구현은 참조 카운팅이 아님 → "곧 닫히겠지" 가정 금지</li>
+      </ul>
+      <py cap="__slots__: 인스턴스 __dict__ 제거">
+      class Point:
+          __slots__ = ("x", "y")
+          def __init__(self, x, y):
+              self.x, self.y = x, y
+
+      p = Point(1, 2)
+      p.z = 3          # AttributeError — 오타 방지 효과도
+      # 수백만 개 인스턴스에서 메모리 대폭 절감, 속성 접근도 약간 빠름
+      # @dataclass(slots=True) 로도 가능 (3.10+)
+      </py>
+    </div>
+    <div>
+      <py bad cap="❌ 흔한 메모리 누수 패턴">
+      _listeners = []                     # 전역 리스트가 객체를 영원히 붙잡음
+      class Widget:
+          def __init__(self):
+              _listeners.append(self.on_event)   # 바운드 메서드 → self 참조
+
+      _cache = {}                         # 상한 없는 캐시
+      def get(key):
+          if key not in _cache:
+              _cache[key] = load(key)
+          return _cache[key]
+      </py>
+      <py good>
+      import weakref
+      _listeners = weakref.WeakSet()      # 또는 WeakMethod
+      _cache = weakref.WeakValueDictionary()  # 또는 lru_cache(maxsize=...)
+      </py>
+      <p class="small">진단 도구: <code>tracemalloc</code>(할당 위치 스냅샷 비교), <code>gc.get_referrers</code>, <code>objgraph</code>, <code>memray</code>, <code>sys.getsizeof</code>(얕은 크기만).</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="7. 고급 기능 (Expert)">
+  <h2>GIL과 동시성 모델 선택</h2>
+  <div class="tablewrap"><table>
+    <tr><th>작업 유형</th><th>추천</th><th>이유 / 주의</th></tr>
+    <tr><td>I/O 바운드, 소수의 동시 작업</td><td><code>ThreadPoolExecutor</code></td><td>I/O 대기 중 GIL 해제. 기존 동기 라이브러리 그대로 사용</td></tr>
+    <tr><td>I/O 바운드, 수천 개 동시 연결</td><td><code>asyncio</code></td><td>스레드보다 가볍다. 단, 전체 스택이 async여야 함 (블로킹 호출 금지)</td></tr>
+    <tr><td>CPU 바운드 (순수 Python)</td><td><code>ProcessPoolExecutor</code>, <code>multiprocessing</code></td><td>GIL 우회. 인자/결과 pickle 비용, 프로세스 시작 비용</td></tr>
+    <tr><td>CPU 바운드 (수치)</td><td>NumPy/Polars 등 C 확장</td><td>C 코드는 GIL을 풀고 벡터화 실행</td></tr>
+    <tr><td>CPU 바운드 + 공유 메모리</td><td>free-threaded 빌드 (3.13t 실험적, 3.14 공식 지원 PEP 779)</td><td>GIL 없음. 확장 모듈 호환성, 단일 스레드 성능 저하 확인 필요</td></tr>
+    <tr><td>격리된 병렬 실행</td><td>서브인터프리터 <code>concurrent.interpreters</code> (3.14, PEP 734)</td><td>인터프리터별 GIL. 공유 객체 제한</td></tr>
+  </table></div>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ GIL이 있어도 경쟁 조건은 발생한다">
+      counter = 0
+      def work():
+          global counter
+          for _ in range(100_000):
+              counter += 1     # LOAD → ADD → STORE, 중간에 스레드 전환 가능
+
+      threads = [Thread(target=work) for _ in range(8)]
+      # 결과가 800000 보다 작을 수 있음
+      </py>
+    </div>
+    <div>
+      <py good>
+      lock = threading.Lock()
+      def work():
+          global counter
+          for _ in range(100_000):
+              with lock:
+                  counter += 1
+      # 더 나은 설계: 공유 상태 대신 각자 계산 후 합치기
+      with ThreadPoolExecutor() as ex:
+          total = sum(ex.map(count_chunk, chunks))
+      </py>
+      <p class="small">GIL은 <b>인터프리터 내부</b>를 보호할 뿐, 여러 바이트코드에 걸친 <b>내 코드의 불변식</b>은 보호하지 않습니다. "GIL 있으니 락 필요 없다"는 리뷰에서 반드시 지적할 오해. free-threading 시대엔 더욱 중요.</p>
+    </div>
+  </div>
+</section>

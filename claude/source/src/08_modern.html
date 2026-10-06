@@ -1,0 +1,142 @@
+<section class="slide divider" data-part="8. 최신 Python (3.8 → 3.14)">
+  <div class="small">PART 8</div>
+  <h1>최신 Python의 변화</h1>
+  <p class="lead">"이 코드는 3.6 시절 스타일이네요. 3.12 기준으로는 이렇게 쓸 수 있습니다"라고 말할 수 있으면 강력한 신호입니다. 단, 프로젝트의 <code>requires-python</code>을 먼저 확인하세요.</p>
+</section>
+
+<section class="slide" data-part="8. 최신 Python (3.8 → 3.14)">
+  <h2>버전별 핵심 기능 (3.8 ~ 3.11)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>버전</th><th>언어/문법</th><th>표준 라이브러리 · 타이핑 · 런타임</th></tr>
+    <tr><td><b>3.8</b> (2019)</td><td>대입 표현식 <code>:=</code> (PEP 572), 위치 전용 인자 <code>/</code> (PEP 570), <code>f"{x=}"</code></td><td><code>Protocol</code>, <code>TypedDict</code>, <code>Literal</code>, <code>Final</code>; <code>functools.cached_property</code>; <code>importlib.metadata</code></td></tr>
+    <tr><td><b>3.9</b> (2020)</td><td>dict 병합 <code>|</code>, <code>|=</code> (PEP 584); 데코레이터 문법 완화 (PEP 614)</td><td>내장 제네릭 <code>list[int]</code> (PEP 585); <code>str.removeprefix/suffix</code>; <code>zoneinfo</code>; PEG 파서</td></tr>
+    <tr><td><b>3.10</b> (2021)</td><td><code>match</code> 구조적 패턴 매칭 (PEP 634); 괄호로 묶은 다중 <code>with</code></td><td><code>X | Y</code> 유니온 (PEP 604); <code>ParamSpec</code>; <code>zip(strict=True)</code>; <code>itertools.pairwise</code>; dataclass <code>slots</code>/<code>kw_only</code>; 더 친절한 에러 메시지</td></tr>
+    <tr><td><b>3.11</b> (2022)</td><td><code>ExceptionGroup</code> / <code>except*</code> (PEP 654); <code>add_note</code></td><td>Faster CPython: 평균 ~25% 빨라짐 (적응형 인터프리터 PEP 659), zero-cost 예외; <code>tomllib</code>; <code>asyncio.TaskGroup</code>, <code>asyncio.timeout</code>; <code>Self</code>, <code>LiteralString</code>, <code>NotRequired</code>; <code>StrEnum</code>; 에러 위치 정밀 표시 (PEP 657)</td></tr>
+  </table></div>
+</section>
+
+<section class="slide" data-part="8. 최신 Python (3.8 → 3.14)">
+  <h2>버전별 핵심 기능 (3.12 ~ 3.14, 그리고 3.15)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>버전</th><th>언어/문법</th><th>표준 라이브러리 · 타이핑 · 런타임</th></tr>
+    <tr><td><b>3.12</b> (2023)</td><td>타입 파라미터 문법 <code>def f[T](x: T)</code>, <code>class C[T]</code>, <code>type Alias = ...</code> (PEP 695); f-string 문법 정식화: 같은 따옴표 중첩·여러 줄 (PEP 701)</td><td>컴프리헨션 인라이닝 (PEP 709); <code>@override</code> (PEP 698); <code>**kwargs: Unpack[TD]</code> (PEP 692); <code>itertools.batched</code>; <code>Path.walk</code>; <code>distutils</code> 제거; <code>datetime.utcnow()</code> deprecated; tarfile 추출 필터</td></tr>
+    <tr><td><b>3.13</b> (2024)</td><td>새 대화형 REPL (여러 줄 편집, 컬러); <code>locals()</code> 의미 정의 (PEP 667)</td><td>free-threaded 빌드 실험적 (PEP 703, <code>python3.13t</code>); 실험적 JIT (PEP 744); <code>TypeIs</code> (PEP 742); <code>@warnings.deprecated</code> (PEP 702); TypeVar 기본값 (PEP 696); <code>ReadOnly</code> TypedDict; <code>copy.replace()</code>; dead batteries 제거 (<code>cgi</code>, <code>crypt</code>, <code>telnetlib</code> 등, PEP 594)</td></tr>
+    <tr><td><b>3.14</b> (2025)</td><td>템플릿 문자열 <code>t"..."</code> (PEP 750); 어노테이션 지연 평가 기본화 (PEP 649/749); 괄호 없는 <code>except A, B:</code> (PEP 758); <code>finally</code> 안 <code>return/break/continue</code> 경고 (PEP 765)</td><td>free-threading 공식 지원 (PEP 779); <code>concurrent.interpreters</code> (PEP 734); <code>compression.zstd</code> (PEP 784); 증분 GC; <code>annotationlib</code>; 실행 중 프로세스에 디버거 연결 (PEP 768); tarfile 기본 필터 <code>"data"</code></td></tr>
+    <tr><td><b>3.15</b> (2026-10 예정)</td><td colspan="2">UTF-8 모드 기본화 (PEP 686) 등이 예정되어 있습니다. 최종 기능 목록은 공식 "What's New in Python 3.15"에서 확인하세요.</td></tr>
+  </table></div>
+  <p class="small">각 버전은 약 5년간 지원됩니다. 3.9는 2025-10, 3.10은 2026-10에 지원 종료(EOL) → 2026년 하반기 신규 프로젝트는 3.12+ 권장.</p>
+</section>
+
+<section class="slide" data-part="8. 최신 Python (3.8 → 3.14)">
+  <h2>같은 코드, 옛날 스타일 vs 모던 스타일</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="Python 3.6 스타일">
+      from typing import Dict, List, Optional, TypeVar, Generic
+      import os
+
+      T = TypeVar("T")
+
+      class Repo(Generic[T]):
+          def __init__(self):
+              self._items = {}  # type: Dict[str, T]
+
+          def get(self, key):
+              # type: (str) -> Optional[T]
+              return self._items.get(key)
+
+      def load(path):
+          if os.path.exists(path):
+              f = open(path)
+              text = f.read()
+              f.close()
+              cfg = dict(DEFAULTS)
+              cfg.update(parse(text))
+              return cfg
+          return None
+
+      def kind(evt):
+          if evt["type"] == "click" and "pos" in evt:
+              x, y = evt["pos"]
+              return "click %d,%d" % (x, y)
+          elif evt["type"] == "key":
+              return "key " + evt["key"]
+      </py>
+    </div>
+    <div>
+      <py good cap="Python 3.12+ 스타일">
+      from pathlib import Path
+
+      class Repo[T]:
+          def __init__(self) -> None:
+              self._items: dict[str, T] = {}
+
+          def get(self, key: str) -> T | None:
+              return self._items.get(key)
+
+      def load(path: Path) -> dict[str, str] | None:
+          try:
+              text = path.read_text(encoding="utf-8")
+          except FileNotFoundError:
+              return None
+          return DEFAULTS | parse(text)
+
+      def kind(evt: dict) -> str:
+          match evt:
+              case {"type": "click", "pos": (x, y)}:
+                  return f"click {x},{y}"
+              case {"type": "key", "key": key}:
+                  return f"key {key}"
+              case _:
+                  raise ValueError(f"unknown event: {evt!r}")
+      </py>
+      <p class="small">원본 <code>kind()</code>는 매칭 실패 시 암묵적으로 <code>None</code>을 반환했던 버그도 모던 버전에서 명시적 에러로 바뀌었습니다 — 리팩터링 제안은 동작 변화를 함께 설명하세요.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="8. 최신 Python (3.8 → 3.14)">
+  <h2>3.14 하이라이트: t-string과 지연 어노테이션</h2>
+  <div class="cols">
+    <div>
+      <py cap="템플릿 문자열 (PEP 750)">
+      from string.templatelib import Template, Interpolation
+      from html import escape
+
+      user = "<script>alert(1)</script>"
+      tpl = t"<p>Hello {user}</p>"      # str 이 아니라 Template 객체!
+      print(type(tpl))                  # <class 'string.templatelib.Template'>
+
+      def html(t: Template) -> str:
+          out = []
+          for part in t:                # 정적 문자열과 Interpolation 이 번갈아 나옴
+              if isinstance(part, Interpolation):
+                  out.append(escape(str(part.value)))
+              else:
+                  out.append(part)
+          return "".join(out)
+
+      html(tpl)  # '<p>Hello &lt;script&gt;...</p>'
+      </py>
+      <p class="small">f-string처럼 편하게 쓰면서, 값이 삽입되기 전에 <b>처리 함수가 이스케이프/파라미터화</b>할 수 있습니다 → SQL, HTML, 셸 명령의 인젝션 방지 API 설계에 활용.</p>
+    </div>
+    <div>
+      <py cap="어노테이션 지연 평가 (PEP 649/749)">
+      # 3.14: 정의 시점에 어노테이션을 평가하지 않음
+      class Node:
+          def add(self, child: Node) -> Node:   # 따옴표나 __future__ 없이 전방 참조 OK
+              ...
+
+      import annotationlib
+      annotationlib.get_annotations(Node.add, format=annotationlib.Format.FORWARDREF)
+      </py>
+      <div class="box"><b>리뷰 관점</b><br>• 3.14 미만 지원 코드라면 여전히 <code>from __future__ import annotations</code>나 문자열 어노테이션이 필요<br>• 런타임에 어노테이션을 읽는 코드(pydantic, dataclass, DI 프레임워크)는 <code>obj.__annotations__</code> 직접 접근 대신 <code>annotationlib</code>/<code>inspect.get_annotations</code> 사용 권장</div>
+      <py cap="PEP 758: 괄호 없는 다중 except (3.14)">
+      try:
+          connect()
+      except TimeoutError, ConnectionRefusedError:   # 3.14+ (as 를 쓰면 괄호 필요)
+          retry()
+      </py>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,158 @@
+<section class="slide divider" data-part="10. 실전 문제 A · 출력 예측">
+  <div class="small">PART 10</div>
+  <h1>실전 문제</h1>
+  <p class="lead"><b>A. 출력 예측 퀴즈 16문항</b> — 언어 모델 이해도를 빠르게 점검합니다.<br><b>B. 코드 리뷰 문제 12문항</b> — Junior 4 · Intermediate 4 · Expert 4. 실제 인터뷰처럼 <b>10~15분 타이머</b>를 켜고, 이슈를 심각도별로 정리한 뒤 정답을 펼쳐 보세요.</p>
+  <p class="small">모든 출력은 CPython 3.11~3.14에서 실행해 확인한 결과입니다. 정답은 ▶ 를 클릭하면 펼쳐집니다.</p>
+</section>
+
+<section class="slide" data-part="10. 실전 문제 A · 출력 예측">
+  <h2>출력 예측 Q1 ~ Q4</h2>
+  <div class="cols">
+    <div>
+      <py cap="Q1">
+      def f(x, acc=[]):
+          acc.append(x)
+          return acc
+
+      print(f(1), f(2))
+      </py>
+      <details><summary>정답</summary><div><p><code>[1, 2] [1, 2]</code> — 기본값 리스트가 공유될 뿐 아니라, 두 호출이 <b>같은 객체</b>를 반환하므로 <code>print</code> 시점엔 둘 다 <code>[1, 2]</code>입니다. (인자는 print 호출 전에 모두 평가됨)</p></div></details>
+      <py cap="Q2">
+      ms = [lambda x: i * x for i in range(4)]
+      print([m(2) for m in ms])
+      </py>
+      <details><summary>정답</summary><div><p><code>[6, 6, 6, 6]</code> — 늦은 바인딩. 모든 람다가 같은 변수 <code>i</code>를 참조하고, 호출 시점의 값은 3. 수정: <code>lambda x, i=i: i * x</code>.</p></div></details>
+    </div>
+    <div>
+      <py cap="Q3">
+      a = [1, 2, 3]; b = a
+      a = a + [4]
+      print(b)
+
+      c = [1, 2, 3]; d = c
+      c += [4]
+      print(d)
+      </py>
+      <details><summary>정답</summary><div><p><code>[1, 2, 3]</code> 그리고 <code>[1, 2, 3, 4]</code> — <code>a + [4]</code>는 새 리스트를 만들어 <code>a</code>를 재바인딩, <code>c += [4]</code>는 <code>__iadd__</code>로 제자리 확장(= <code>extend</code>).</p></div></details>
+      <py cap="Q4">
+      print(round(2.5), round(-0.5), int(-2.7), -7 // 2)
+      </py>
+      <details><summary>정답</summary><div><p><code>2 0 -2 -4</code> — <code>round</code>는 짝수 쪽으로(은행가 반올림), <code>int()</code>는 0 방향 절삭, <code>//</code>는 내림(음의 무한대 방향).</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="10. 실전 문제 A · 출력 예측">
+  <h2>출력 예측 Q5 ~ Q8</h2>
+  <div class="cols">
+    <div>
+      <py cap="Q5">
+      print({True: "a", 1: "b", 1.0: "c"})
+      </py>
+      <details><summary>정답</summary><div><p><code>{True: 'c'}</code> — <code>True == 1 == 1.0</code>이고 해시도 같아 같은 키. 키는 <b>처음 삽입된 객체(True)</b>가 유지되고 값은 마지막 것으로 덮어씀.</p></div></details>
+      <py cap="Q6">
+      def g():
+          try:
+              return 1
+          finally:
+              return 2
+
+      print(g())
+      </py>
+      <details><summary>정답</summary><div><p><code>2</code> — <code>finally</code>의 <code>return</code>이 이전 return을 덮어씁니다. 예외였다면 예외도 삼킵니다. 3.14부터 <code>SyntaxWarning</code> (PEP 765). 리뷰에서 반드시 지적.</p></div></details>
+    </div>
+    <div>
+      <py cap="Q7">
+      x = [[]] * 2
+      x[0].append(1)
+      print(x)
+      </py>
+      <details><summary>정답</summary><div><p><code>[[1], [1]]</code> — 시퀀스 곱셈은 참조를 복제. <code>[[] for _ in range(2)]</code> 사용.</p></div></details>
+      <py cap="Q8">
+      gen = (i for i in range(3))
+      print(list(gen), list(gen), sum(gen))
+      </py>
+      <details><summary>정답</summary><div><p><code>[0, 1, 2] [] 0</code> — 제너레이터는 일회성. 이미 소진된 이터레이터는 에러 없이 빈 결과.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="10. 실전 문제 A · 출력 예측">
+  <h2>출력 예측 Q9 ~ Q12</h2>
+  <div class="cols">
+    <div>
+      <py cap="Q9">
+      class A:
+          x = []
+
+      a, b = A(), A()
+      a.x.append(1)
+      b.x = [2]
+      print(A.x, a.x, b.x)
+      </py>
+      <details><summary>정답</summary><div><p><code>[1] [1] [2]</code> — <code>a.x.append</code>는 클래스 속성 리스트를 변경(공유). <code>b.x = [2]</code>는 <code>b</code>의 인스턴스 속성을 새로 만들어 클래스 속성을 가림.</p></div></details>
+      <py cap="Q10">
+      print(False == False in [False])
+      </py>
+      <details><summary>정답</summary><div><p><code>True</code> — <code>==</code>와 <code>in</code>은 같은 우선순위의 비교 연산자라 <b>체이닝</b>됩니다: <code>(False == False) and (False in [False])</code>. <code>(False == False) in [False]</code>로 읽으면 False가 될 것 같지만 아닙니다.</p></div></details>
+    </div>
+    <div>
+      <py cap="Q11">
+      x = 10
+      def h():
+          print(x)
+          x = 20
+      h()
+      </py>
+      <details><summary>정답</summary><div><p><code>UnboundLocalError: cannot access local variable 'x' where it is not associated with a value</code> — 함수 내 어딘가에 할당이 있으므로 <code>x</code>는 컴파일 시점에 로컬로 결정됨. <code>print(x)</code> 시점엔 아직 할당 전.</p></div></details>
+      <py cap="Q12">
+      d1 = {"x": 1, "y": 2}
+      d2 = d1 | {"x": 3}
+      print(d2, d1)
+      </py>
+      <details><summary>정답</summary><div><p><code>{'x': 3, 'y': 2} {'x': 1, 'y': 2}</code> — <code>|</code>는 새 dict를 반환(오른쪽 우선, 순서는 왼쪽 키 순서 유지). 제자리 변경은 <code>|=</code> 또는 <code>update</code>.</p></div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="10. 실전 문제 A · 출력 예측">
+  <h2>출력 예측 Q13 ~ Q16</h2>
+  <div class="cols">
+    <div>
+      <py cap="Q13">
+      class A:
+          def who(self): return "A"
+      class B(A):
+          def who(self): return "B" + super().who()
+      class C(A):
+          def who(self): return "C" + super().who()
+      class D(B, C):
+          def who(self): return "D" + super().who()
+
+      print(D().who())
+      </py>
+      <details><summary>정답</summary><div><p><code>DBCA</code> — MRO는 <code>D → B → C → A → object</code>. <code>B</code>의 <code>super()</code>는 <code>A</code>가 아니라 MRO상 다음인 <code>C</code>.</p></div></details>
+      <py cap="Q14">
+      class P:
+          def __eq__(self, other):
+              return True
+
+      print({P()})
+      </py>
+      <details><summary>정답</summary><div><p><code>TypeError: unhashable type: 'P'</code> — <code>__eq__</code>만 정의하면 <code>__hash__</code>가 <code>None</code>으로 설정됩니다.</p></div></details>
+    </div>
+    <div>
+      <py cap="Q15">
+      print(sorted([3, 1, 2]).reverse())
+      </py>
+      <details><summary>정답</summary><div><p><code>None</code> — <code>list.reverse()</code>는 제자리 변경 후 <code>None</code> 반환. <code>sorted(xs, reverse=True)</code>를 쓰세요.</p></div></details>
+      <py cap="Q16">
+      arr = [1, 8, 15]
+      g = (x for x in arr if arr.count(x) > 0)
+      arr = [2, 8, 22]
+      print(list(g))
+      </py>
+      <details><summary>정답</summary><div><p><code>[8]</code> — 제너레이터 식에서 <b>가장 바깥 iterable(<code>arr</code>)만 즉시 평가</b>되어 원래 리스트 <code>[1, 8, 15]</code>를 순회하고, <code>if</code> 조건의 <code>arr</code>는 실행 시점에 조회되어 새 리스트 <code>[2, 8, 22]</code>를 봅니다. 두 리스트에 모두 있는 8만 남음.</p></div></details>
+    </div>
+  </div>
+</section>

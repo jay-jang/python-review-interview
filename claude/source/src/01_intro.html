@@ -1,0 +1,136 @@
+<section class="slide divider cover" data-part="시작">
+  <div class="small">Python Code Review Interview · Study Deck</div>
+  <h1>Python 코드 리뷰 인터뷰<br>완전 정복</h1>
+  <p class="lead">핵심 문법과 언어적 특징 · 스타일 가이드 · 흔한 실수 · Best Practice · 고급 기능 · 최신 버전 변화 · 레벨별 리뷰 포인트 · 실전 문제</p>
+  <p><span class="lv jr">Junior</span><span class="lv mid">Intermediate</span><span class="lv sr">Expert</span></p>
+  <p class="small">조작: <kbd>←</kbd> <kbd>→</kbd> 또는 <kbd>Space</kbd> 이동 · <kbd>T</kbd> 목차 · <kbd>S</kbd> 슬라이드/스크롤 전환 · <kbd>D</kbd> 다크 모드 · 인쇄(Ctrl/⌘+P) 시 전체 슬라이드 출력<br>기준 버전: Python 3.12 ~ 3.14 (버전별 차이는 해당 슬라이드에 표시)</p>
+</section>
+
+<section class="slide" data-part="시작">
+  <h2>이 자료의 구성과 활용법</h2>
+  <div class="cols">
+    <div>
+      <ol>
+        <li><b>코드 리뷰 인터뷰란</b> — 평가 기준, 진행 순서, 코멘트 작성법</li>
+        <li><b>Python의 핵심 모델</b> — 객체/이름/가변성, 데이터 모델, 이터레이션</li>
+        <li><b>Pythonic 문법</b> — 컴프리헨션, 언패킹, EAFP, 컨텍스트 매니저 등</li>
+        <li><b>스타일 가이드</b> — PEP 8, PEP 257, PEP 20, 타입 힌트, 도구</li>
+        <li><b>흔한 실수</b> <span class="lv jr">Junior</span> — 리뷰에서 반드시 잡아야 할 함정</li>
+        <li><b>Best Practice</b> <span class="lv mid">Intermediate</span> — 설계, 예외, 로깅, 타입, 테스트</li>
+        <li><b>고급 기능</b> <span class="lv sr">Expert</span> — 데코레이터, 디스크립터, 메타클래스, 동시성, 성능, 보안</li>
+        <li><b>최신 Python (3.8 → 3.14)</b></li>
+        <li><b>레벨별 리뷰 체크리스트</b></li>
+        <li><b>실전 문제</b> — 출력 예측 퀴즈 + 코드 리뷰 문제 (정답/해설 포함)</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box tip"><b>학습 순서 추천</b><br>1회독: 1~5장으로 "버그를 찾는 눈"을 만든다 → 2회독: 6~8장으로 "왜 더 나은가"를 설명하는 말을 만든다 → 마지막: 10장 문제를 <b>시간을 재고</b> 소리 내어 리뷰해 본다.</div>
+      <div class="box"><b>표기 규칙</b><br>
+        <span class="lv jr">Junior</span> 반드시 알아야 할 기본<br>
+        <span class="lv mid">Intermediate</span> 실무 품질을 결정하는 포인트<br>
+        <span class="lv sr">Expert</span> 내부 동작·설계 트레이드오프까지 설명</div>
+      <div class="code bad"><div class="cap">❌ 빨간 테두리 = 문제 있는 코드</div><pre>…</pre></div>
+      <div class="code good"><div class="cap">✅ 초록 테두리 = 개선된 코드</div><pre>…</pre></div>
+    </div>
+  </div>
+</section>
+
+<section class="slide divider" data-part="1. 코드 리뷰 인터뷰란">
+  <div class="small">PART 1</div>
+  <h1>코드 리뷰 인터뷰란</h1>
+  <p class="lead">면접관은 "버그를 몇 개 찾았나"보다 <b>무엇을 먼저 보고, 어떻게 우선순위를 매기며, 어떻게 말하는가</b>를 봅니다.</p>
+</section>
+
+<section class="slide" data-part="1. 코드 리뷰 인터뷰란">
+  <h2>면접관이 실제로 평가하는 것</h2>
+  <div class="tablewrap"><table>
+    <tr><th>평가 항목</th><th>보는 것</th><th>좋은 신호</th></tr>
+    <tr><td>정확성 (Correctness)</td><td>버그, 엣지 케이스, 예외 처리</td><td>빈 입력·None·경계값·동시성을 스스로 떠올린다</td></tr>
+    <tr><td>언어 숙련도</td><td>Pythonic한 관용구, 표준 라이브러리 활용</td><td>"이건 <code>collections.Counter</code>로 한 줄"처럼 대안을 구체적으로 제시</td></tr>
+    <tr><td>설계 감각</td><td>책임 분리, 결합도, 확장성, API 형태</td><td>"이 함수는 I/O와 계산을 같이 해서 테스트가 어렵다"</td></tr>
+    <tr><td>성능 감각</td><td>시간/공간 복잡도, 불필요한 복사, N+1</td><td>"리스트 <code>in</code> 검사가 루프 안에 있어 O(n²)입니다 → set"</td></tr>
+    <tr><td>안정성/보안</td><td>리소스 누수, 인젝션, 비밀정보, 역직렬화</td><td><code>shell=True</code>, <code>pickle.loads</code>, f-string SQL을 즉시 지적</td></tr>
+    <tr><td>테스트 가능성</td><td>테스트 존재·품질, 의존성 주입</td><td>"이 분기는 테스트가 없습니다. 이런 케이스를 추가하면…"</td></tr>
+    <tr><td>커뮤니케이션</td><td>톤, 우선순위, 근거 제시</td><td>Blocking vs Nit 구분, 질문형 코멘트, 칭찬도 포함</td></tr>
+  </table></div>
+  <div class="box warn"><b>흔한 감점 요인</b> 스타일(공백, 따옴표) 지적만 10개 하고 실제 버그를 놓치는 것. 스타일은 <b>도구가 잡는다</b>고 말하고 넘어가는 것이 오히려 시니어다운 태도입니다.</div>
+</section>
+
+<section class="slide" data-part="1. 코드 리뷰 인터뷰란">
+  <h2>리뷰 진행 순서: 큰 것 → 작은 것</h2>
+  <div class="cols">
+    <div>
+      <ol>
+        <li><b>맥락 파악 (1~2분)</b> — 이 코드의 목적은? 입력/출력은? 호출자는 누구? 모르면 <b>질문</b>한다.</li>
+        <li><b>정확성</b> — 로직 버그, 엣지 케이스(빈 값, None, 0, 음수, 유니코드, 대용량), 예외 경로.</li>
+        <li><b>안정성/보안</b> — 리소스 정리, 타임아웃, 재시도, 인젝션, 비밀정보 노출.</li>
+        <li><b>설계</b> — 함수/클래스 책임, 중복, 추상화 수준, 의존성 방향, 공개 API 형태.</li>
+        <li><b>성능</b> — 복잡도, 불필요한 반복/복사, I/O 패턴. (측정 없이 과도한 최적화 요구는 금물)</li>
+        <li><b>가독성/관용구</b> — 네이밍, Pythonic 표현, 타입 힌트, docstring.</li>
+        <li><b>테스트</b> — 무엇이 테스트되지 않았는가?</li>
+        <li><b>스타일</b> — 린터/포매터로 자동화 제안.</li>
+      </ol>
+    </div>
+    <div>
+      <div class="box tip"><b>소리 내어 생각하기 (Think aloud)</b><br>"먼저 전체 흐름을 보고, 정확성 문제를 우선 보겠습니다. … 여기서 <code>items</code>가 비어 있으면 <code>ZeroDivisionError</code>가 납니다. 이건 blocking입니다."</div>
+      <div class="box"><b>마무리 요약 템플릿</b><br>"치명적 이슈 2개(X, Y), 설계 개선 1개(Z), 나머지는 nit입니다. 가장 먼저 X를 고쳐야 하는 이유는 …"</div>
+      <div class="box warn"><b>시간 배분</b><br>30분 인터뷰라면: 맥락 2분 → 탐색/코멘트 20분 → 우선순위 요약과 개선 코드 제시 8분.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="1. 코드 리뷰 인터뷰란">
+  <h2>좋은 리뷰 코멘트 작성법</h2>
+  <div class="cols">
+    <div>
+      <h3>심각도 라벨을 붙인다</h3>
+      <ul>
+        <li><b>[Blocking]</b> 버그, 데이터 손실, 보안, 계약 위반 — 머지 전에 반드시 수정</li>
+        <li><b>[Suggestion]</b> 설계·가독성 개선 — 이유와 함께 제안</li>
+        <li><b>[Nit]</b> 사소한 취향 — 무시해도 됨</li>
+        <li><b>[Question]</b> 의도 확인 — 비난이 아닌 질문</li>
+        <li><b>[Praise]</b> 잘한 점 — 학습 효과와 신뢰를 만든다</li>
+      </ul>
+      <h3>구조: 관찰 → 영향 → 제안</h3>
+      <p>"<code>timeout</code>이 지정되지 않았습니다(관찰). 원격 서버가 응답하지 않으면 워커가 무한히 대기합니다(영향). <code>timeout=(3, 10)</code>을 지정하고 재시도 정책을 두는 건 어떨까요?(제안)"</p>
+    </div>
+    <div>
+      <div class="box bad"><b>나쁜 코멘트</b><br>"이거 왜 이렇게 짰어요?"<br>"틀렸음."<br>"그냥 다 다시 쓰세요."</div>
+      <div class="box tip"><b>좋은 코멘트</b><br>"[Blocking] <code>def add(item, bucket=[])</code>는 기본값 리스트가 호출 간 공유되어, 두 번째 호출부터 이전 값이 섞입니다. <code>bucket=None</code> 후 내부에서 생성하는 패턴을 제안합니다."<br><br>"[Nit] <code>for i in range(len(xs))</code> 대신 <code>enumerate(xs)</code>가 의도를 더 잘 드러냅니다."</div>
+      <div class="box"><b>Google eng-practices의 원칙</b><br>"완벽한 코드는 없다. 코드베이스의 전체 건강을 <b>개선</b>한다면 승인하라." — 사람이 아니라 코드에 대해 말하고, 이유를 설명하고, 해결책은 강요하지 말고 제시한다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="1. 코드 리뷰 인터뷰란">
+  <h2>레벨별 기대치</h2>
+  <div class="cols3">
+    <div class="card"><h4><span class="lv jr">Junior</span></h4>
+      <ul>
+        <li>명백한 버그·예외 누락 발견</li>
+        <li>가변 기본 인자, <code>is</code>/<code>==</code>, 순회 중 수정 같은 함정 인지</li>
+        <li>PEP 8 네이밍, 관용구 (<code>enumerate</code>, <code>with</code>, 컴프리헨션)</li>
+        <li>파일·커넥션 닫기</li>
+        <li>매직 넘버, 중복 코드 지적</li>
+      </ul></div>
+    <div class="card"><h4><span class="lv mid">Intermediate</span></h4>
+      <ul>
+        <li>함수/클래스 책임 분리, 테스트 용이성</li>
+        <li>예외 계층 설계, <code>raise ... from</code>, 로깅</li>
+        <li>타입 힌트 품질 (Protocol, TypedDict, Optional 남용)</li>
+        <li>제너레이터/이터레이터로 메모리 절감</li>
+        <li>표준 라이브러리 (<code>itertools</code>, <code>functools</code>, <code>collections</code>, <code>pathlib</code>)</li>
+        <li>pytest fixture/parametrize, mock 위치</li>
+      </ul></div>
+    <div class="card"><h4><span class="lv sr">Expert</span></h4>
+      <ul>
+        <li>GIL·free-threading, asyncio 이벤트 루프 블로킹</li>
+        <li>데코레이터/디스크립터/메타클래스 트레이드오프</li>
+        <li><code>__hash__</code>/<code>__eq__</code> 계약, MRO, <code>__slots__</code></li>
+        <li>성능 측정(cProfile), 메모리 모델, 자료구조 복잡도</li>
+        <li>보안(역직렬화, 인젝션), 공개 API 하위 호환성</li>
+        <li>패키징, 의존성, 관측성(observability)</li>
+      </ul></div>
+  </div>
+  <div class="box"><b>포인트</b> 같은 코드에서도 Junior는 "여기 버그"를, Expert는 "이 버그가 생길 수밖에 없던 설계 원인과 재발 방지책(타입, 테스트, 린트 규칙)"까지 말합니다.</div>
+</section>

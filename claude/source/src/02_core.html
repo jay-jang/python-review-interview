@@ -1,0 +1,352 @@
+<section class="slide divider" data-part="2. Python의 핵심 모델">
+  <div class="small">PART 2</div>
+  <h1>Python의 핵심 모델</h1>
+  <p class="lead">대부분의 "이상한 버그"는 <b>이름(name)과 객체(object)의 관계</b>, <b>가변성(mutability)</b>, <b>스코프</b>를 잘못 이해한 데서 나옵니다. 리뷰어는 이 모델로 코드를 읽어야 합니다.</p>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>모든 것은 객체, 변수는 "이름표"</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li>변수는 값을 담는 상자가 아니라 객체에 붙은 <b>이름(참조)</b>입니다.</li>
+        <li><code>=</code>는 복사가 아니라 <b>바인딩</b>입니다. <code>b = a</code>는 같은 객체에 이름을 하나 더 붙일 뿐.</li>
+        <li>모든 객체는 <b>정체성</b>(<code>id</code>), <b>타입</b>, <b>값</b>을 가집니다. <code>is</code>는 정체성, <code>==</code>는 값(<code>__eq__</code>) 비교.</li>
+        <li>함수 인자 전달은 "call by sharing(객체 참조 전달)": 함수 안에서 <b>객체를 변경</b>하면 호출자에게 보이고, <b>이름을 재바인딩</b>하면 보이지 않습니다.</li>
+      </ul>
+      <py cap="참조 공유">
+      a = [1, 2, 3]
+      b = a          # 같은 리스트 객체
+      b.append(4)
+      print(a)       # [1, 2, 3, 4]
+      print(a is b)  # True
+      </py>
+    </div>
+    <div>
+      <py cap="변경(mutate) vs 재바인딩(rebind)">
+      def mutate(xs):
+          xs.append(99)      # 호출자의 객체가 바뀜
+
+      def rebind(xs):
+          xs = [0]           # 로컬 이름만 바뀜
+
+      data = [1]
+      mutate(data); print(data)   # [1, 99]
+      rebind(data); print(data)   # [1, 99]
+      </py>
+      <py cap="+= 의 함정: 가변 객체는 제자리 변경">
+      t = [1]
+      u = t
+      t += [2]     # list.__iadd__ → 제자리 변경
+      print(u)     # [1, 2]
+
+      s = (1,)
+      v = s
+      s += (2,)    # 튜플은 새 객체 생성
+      print(v)     # (1,)
+      </py>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>가변(Mutable) vs 불변(Immutable)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>불변 (hashable 가능)</th><th>가변 (unhashable)</th><th>리뷰 포인트</th></tr>
+    <tr><td><code>int</code>, <code>float</code>, <code>complex</code>, <code>bool</code>, <code>str</code>, <code>bytes</code>, <code>tuple</code>, <code>frozenset</code>, <code>None</code>, <code>range</code></td>
+        <td><code>list</code>, <code>dict</code>, <code>set</code>, <code>bytearray</code>, 대부분의 사용자 정의 객체</td>
+        <td>가변 객체를 기본 인자, 클래스 변수, 모듈 전역 상태로 공유하고 있지 않은가?</td></tr>
+  </table></div>
+  <div class="cols">
+    <div>
+      <py cap="튜플은 불변이지만 내용물은 가변일 수 있다">
+      t = ([1, 2], 3)
+      t[0].append(3)     # OK → ([1, 2, 3], 3)
+      hash(t)            # TypeError: unhashable type: 'list'
+
+      # 유명한 퀴즈
+      t = (1, [2])
+      try:
+          t[1] += [3]     # TypeError 발생 ...
+      except TypeError:
+          pass
+      print(t)            # 하지만 (1, [2, 3]) 으로 바뀌어 있다!
+      </py>
+    </div>
+    <div>
+      <div class="box"><b>왜?</b> <code>t[1] += [3]</code>은 ① <code>t[1].__iadd__([3])</code>로 리스트를 제자리 확장한 뒤 ② 결과를 <code>t[1]</code>에 다시 할당하려다 실패합니다. 1단계는 이미 일어났습니다.</div>
+      <div class="box tip"><b>설계 팁</b> 공유되는 설정/상수는 <code>tuple</code>, <code>frozenset</code>, <code>types.MappingProxyType</code>, <code>@dataclass(frozen=True)</code>로 불변으로 만들어 의도치 않은 변경을 막습니다.</div>
+      <py>
+      from types import MappingProxyType
+      _DEFAULTS = {"retries": 3, "timeout": 5}
+      DEFAULTS = MappingProxyType(_DEFAULTS)  # 읽기 전용 뷰
+      DEFAULTS["retries"] = 10  # TypeError
+      </py>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>얕은 복사 vs 깊은 복사</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ 2차원 리스트를 곱셈으로 만들기">
+      grid = [[0] * 3] * 3      # 같은 내부 리스트 3번 참조
+      grid[0][0] = 1
+      print(grid)  # [[1, 0, 0], [1, 0, 0], [1, 0, 0]]
+      </py>
+      <py good>
+      grid = [[0] * 3 for _ in range(3)]
+      grid[0][0] = 1
+      print(grid)  # [[1, 0, 0], [0, 0, 0], [0, 0, 0]]
+      </py>
+    </div>
+    <div>
+      <py cap="복사의 종류">
+      import copy
+      orig = {"tags": ["a"], "n": 1}
+
+      alias   = orig                 # 복사 아님
+      shallow = orig.copy()          # = dict(orig) = copy.copy(orig)
+      deep    = copy.deepcopy(orig)
+
+      orig["tags"].append("b")
+      print(shallow["tags"])  # ['a', 'b']  ← 내부는 공유
+      print(deep["tags"])     # ['a']
+      </py>
+      <ul class="small">
+        <li><code>lst[:]</code>, <code>list(lst)</code>, <code>lst.copy()</code>는 모두 얕은 복사</li>
+        <li><code>deepcopy</code>는 비용이 크고 순환 참조/특수 객체(락, 소켓)에서 문제 → 필요한 곳만</li>
+        <li>사용자 클래스는 <code>__copy__</code>/<code>__deepcopy__</code>로 제어 가능</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>Truthiness와 None 비교</h2>
+  <div class="cols">
+    <div>
+      <p>Falsy 값: <code>None</code>, <code>False</code>, <code>0</code>, <code>0.0</code>, <code>0j</code>, <code>Decimal(0)</code>, <code>''</code>, <code>b''</code>, <code>[]</code>, <code>()</code>, <code>{}</code>, <code>set()</code>, <code>range(0)</code>, 그리고 <code>__bool__</code>이 False 이거나 <code>__len__</code>이 0인 객체.</p>
+      <py good cap="✅ PEP 8 권장">
+      if not items:            # 빈 시퀀스 검사
+          ...
+      if value is None:        # 싱글톤 비교는 is
+          ...
+      if flag:                 # == True 쓰지 않기
+          ...
+      </py>
+    </div>
+    <div>
+      <py bad cap="❌ 0 과 None 을 구분해야 할 때 truthiness 사용">
+      def set_timeout(timeout=None):
+          if not timeout:          # timeout=0 도 기본값으로 덮어써짐!
+              timeout = 30
+          return timeout
+
+      set_timeout(0)   # 30  ← 의도는 0 (즉시 타임아웃)
+      </py>
+      <py good>
+      def set_timeout(timeout: float | None = None) -> float:
+          if timeout is None:
+              timeout = 30
+          return timeout
+      </py>
+      <div class="box warn"><b>리뷰 포인트</b> <code>x or default</code> 패턴도 같은 문제(<code>0</code>, <code>""</code>, <code>[]</code>이 유효한 값일 때). numpy 배열/pandas DataFrame은 <code>if arr:</code>가 <code>ValueError</code>를 냅니다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>스코프: LEGB, global, nonlocal</h2>
+  <div class="cols">
+    <div>
+      <p>이름 검색 순서: <b>L</b>ocal → <b>E</b>nclosing → <b>G</b>lobal → <b>B</b>uilt-in.<br>함수 안 어디서든 이름에 <b>할당</b>이 있으면, 그 이름은 함수 전체에서 <b>로컬</b>로 컴파일 시점에 결정됩니다.</p>
+      <py bad cap="❌ UnboundLocalError">
+      count = 0
+      def inc():
+          count += 1      # count 는 로컬로 간주 → 읽기 전 할당 안 됨
+          return count
+      inc()  # UnboundLocalError
+      </py>
+      <py cap="nonlocal 로 클로저 상태 변경">
+      def make_counter():
+          count = 0
+          def inc():
+              nonlocal count
+              count += 1
+              return count
+          return inc
+      </py>
+    </div>
+    <div>
+      <div class="box warn"><b>리뷰 포인트</b> <code>global</code>은 거의 항상 설계 냄새입니다. 테스트 격리가 깨지고 스레드 안전하지 않습니다. 상태는 객체/인자로 명시적으로 전달하세요.</div>
+      <py cap="컴프리헨션은 자체 스코프 (Py3)">
+      x = "outer"
+      ys = [x for x in range(3)]
+      print(x)    # 'outer' (Py2 에서는 2 였음)
+
+      # 클래스 본문 스코프는 컴프리헨션에서 안 보인다
+      class C:
+          base = 10
+          vals = [base + i for i in range(3)]  # NameError: name 'base' is not defined
+      </py>
+      <p class="small">클래스 본문은 enclosing 스코프가 아니므로 메서드나 컴프리헨션 내부에서 클래스 변수 이름을 바로 참조할 수 없습니다(가장 바깥 iterable인 <code>range(3)</code>만 클래스 스코프에서 평가됨). 3.12의 PEP 709(컴프리헨션 인라이닝) 이후에도 이 규칙은 동일합니다.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>데이터 모델: 던더(dunder) 메서드</h2>
+  <p>Python의 문법은 특수 메서드 호출로 번역됩니다. 이를 구현하면 내 객체가 내장 타입처럼 동작합니다.</p>
+  <div class="tablewrap"><table>
+    <tr><th>문법 / 내장 함수</th><th>호출되는 메서드</th><th>메모</th></tr>
+    <tr><td><code>repr(x)</code>, <code>str(x)</code>, <code>f"{x}"</code></td><td><code>__repr__</code>, <code>__str__</code>, <code>__format__</code></td><td><code>__repr__</code>은 디버깅용, 가능하면 재생성 가능한 형태</td></tr>
+    <tr><td><code>len(x)</code>, <code>bool(x)</code></td><td><code>__len__</code>, <code>__bool__</code></td><td><code>__bool__</code> 없으면 <code>__len__</code> 사용</td></tr>
+    <tr><td><code>x[k]</code>, <code>x[k]=v</code>, <code>k in x</code></td><td><code>__getitem__</code>, <code>__setitem__</code>, <code>__contains__</code></td><td><code>__contains__</code> 없으면 순회로 대체(느림)</td></tr>
+    <tr><td><code>for v in x</code>, <code>next(it)</code></td><td><code>__iter__</code>, <code>__next__</code></td><td>이터레이터 프로토콜</td></tr>
+    <tr><td><code>x == y</code>, <code>hash(x)</code></td><td><code>__eq__</code>, <code>__hash__</code></td><td><code>__eq__</code>만 정의하면 <code>__hash__ = None</code>이 됨</td></tr>
+    <tr><td><code>x &lt; y</code>, 정렬</td><td><code>__lt__</code> 등</td><td><code>functools.total_ordering</code></td></tr>
+    <tr><td><code>x + y</code>, <code>x += y</code></td><td><code>__add__</code>/<code>__radd__</code>, <code>__iadd__</code></td><td>지원 불가 타입엔 <code>NotImplemented</code> 반환 (raise 아님!)</td></tr>
+    <tr><td><code>with x:</code></td><td><code>__enter__</code>, <code>__exit__</code></td><td><code>async with</code>는 <code>__aenter__</code>/<code>__aexit__</code></td></tr>
+    <tr><td><code>x(...)</code></td><td><code>__call__</code></td><td>상태를 가진 함수 객체</td></tr>
+    <tr><td><code>x.attr</code></td><td><code>__getattribute__</code> → (실패 시) <code>__getattr__</code></td><td>디스크립터, <code>property</code>와 연결</td></tr>
+  </table></div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>데이터 모델 구현 예시와 리뷰 포인트</h2>
+  <div class="cols">
+    <div>
+      <py>
+      from functools import total_ordering
+
+      @total_ordering
+      class Money:
+          __slots__ = ("amount", "currency")
+
+          def __init__(self, amount: int, currency: str) -> None:
+              self.amount = amount
+              self.currency = currency
+
+          def __repr__(self) -> str:
+              return f"Money({self.amount!r}, {self.currency!r})"
+
+          def __eq__(self, other: object) -> bool:
+              if not isinstance(other, Money):
+                  return NotImplemented
+              return (self.amount, self.currency) == (other.amount, other.currency)
+
+          def __hash__(self) -> int:
+              return hash((self.amount, self.currency))
+
+          def __lt__(self, other: "Money") -> bool:
+              if not isinstance(other, Money):
+                  return NotImplemented
+              if self.currency != other.currency:
+                  raise ValueError("currency mismatch")
+              return self.amount < other.amount
+
+          def __add__(self, other: "Money") -> "Money":
+              if not isinstance(other, Money):
+                  return NotImplemented
+              if self.currency != other.currency:
+                  raise ValueError("currency mismatch")
+              return Money(self.amount + other.amount, self.currency)
+      </py>
+    </div>
+    <div>
+      <ul>
+        <li><b><code>NotImplemented</code> 반환</b>: 상대 타입이 처리할 기회(<code>__radd__</code>, 반사 비교)를 줍니다. <code>raise NotImplementedError</code>와 혼동하는 것은 흔한 실수.</li>
+        <li><b><code>__eq__</code>와 <code>__hash__</code> 계약</b>: <code>a == b</code>이면 <code>hash(a) == hash(b)</code>이어야 합니다. 해시에 쓰이는 필드는 변경되면 안 됩니다(가변 객체를 dict 키로 쓰면 찾을 수 없게 됨).</li>
+        <li><b>돈은 <code>float</code> 금지</b>: 정수(최소 단위)나 <code>decimal.Decimal</code>.</li>
+        <li><b><code>__repr__</code></b>은 로그/디버거에서 보이는 얼굴 — 항상 구현 권장.</li>
+        <li>사실 이 클래스는 <code>@dataclass(frozen=True, order=True, slots=True)</code>로 대부분 대체 가능 → 리뷰에서 "보일러플레이트를 줄일 수 있다"고 제안.</li>
+      </ul>
+      <py cap="dict 키로 쓰인 가변 객체">
+      class Key:
+          def __init__(self, v): self.v = v
+          def __eq__(self, o): return self.v == o.v
+          def __hash__(self): return hash(self.v)
+
+      k = Key(1); d = {k: "x"}
+      k.v = 2
+      print(d.get(Key(1)), d.get(Key(2)))  # None None  ← 영원히 못 찾음
+      </py>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>이터러블 vs 이터레이터 (일회성 소비)</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><b>Iterable</b>: <code>__iter__</code>로 새 이터레이터를 돌려주는 객체 (list, dict, str, 파일 …)</li>
+        <li><b>Iterator</b>: <code>__next__</code>로 값을 하나씩 내고 끝나면 <code>StopIteration</code>. <code>__iter__</code>는 자기 자신 반환 → <b>한 번만</b> 순회 가능</li>
+        <li>제너레이터, <code>map</code>, <code>filter</code>, <code>zip</code>, <code>enumerate</code>, 파일 객체, <code>csv.reader</code>는 모두 이터레이터</li>
+      </ul>
+      <py bad cap="❌ 두 번 순회하면 두 번째는 비어 있다">
+      def load(path):
+          return (line.strip() for line in open(path))
+
+      rows = load("data.txt")
+      total = sum(1 for _ in rows)
+      first = next(iter(rows), None)   # 항상 None!
+      </py>
+    </div>
+    <div>
+      <py good cap="✅ 재순회가 필요하면 iterable 클래스나 리스트화">
+      class Lines:
+          def __init__(self, path: str) -> None:
+              self.path = path
+
+          def __iter__(self):
+              with open(self.path, encoding="utf-8") as f:
+                  for line in f:
+                      yield line.rstrip("\n")
+
+      lines = Lines("data.txt")
+      n = sum(1 for _ in lines)     # 순회할 때마다 새로 연다
+      first = next(iter(lines), None)
+      </py>
+      <div class="box warn"><b>리뷰 포인트</b> 함수가 "iterable"을 받는다고 문서화해 놓고 내부에서 두 번 순회하면, 제너레이터를 넘긴 호출자는 조용히 잘못된 결과를 받습니다. 두 번 필요하면 <code>list()</code>로 고정하거나 <code>Sequence</code> 타입을 요구하세요.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="2. Python의 핵심 모델">
+  <h2>is 와 == 그리고 CPython 구현 디테일</h2>
+  <div class="cols">
+    <div>
+      <py console cap="REPL 결과는 구현에 따라 다르다">
+      >>> a = 256; b = 256
+      >>> a is b
+      True
+      >>> a = 257; b = 257   # 같은 줄/코드 객체 안에서는 상수 공유로 True 일 수도
+      >>> int("257") is int("257")
+      False
+      >>> "hello" is "hello"   # SyntaxWarning: "is" with a literal
+      True
+      </py>
+      <ul>
+        <li>CPython은 -5~256 정수와 일부 문자열을 캐싱/인턴(intern)합니다. 이는 <b>구현 세부사항</b>입니다.</li>
+        <li><code>is</code>는 <code>None</code>, <code>True</code>/<code>False</code>(굳이 비교할 때), 센티널 객체, <code>Ellipsis</code> 비교에만 사용.</li>
+      </ul>
+    </div>
+    <div>
+      <py good cap="✅ 센티널 객체 패턴 (None 이 유효한 값일 때)">
+      _MISSING = object()
+
+      def get(d: dict, key, default=_MISSING):
+          try:
+              return d[key]
+          except KeyError:
+              if default is _MISSING:
+                  raise
+              return default
+      </py>
+      <div class="box"><b>float 비교</b> <code>0.1 + 0.2 == 0.3</code>은 <code>False</code>. <code>math.isclose(a, b, rel_tol=1e-9)</code> 사용. <code>float('nan') == float('nan')</code>도 <code>False</code>이며, <code>nan in [nan]</code>은 동일 객체라 <code>True</code>(컨테이너는 <code>is</code>를 먼저 검사).</div>
+    </div>
+  </div>
+</section>

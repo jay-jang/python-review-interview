@@ -1,0 +1,261 @@
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv mid">Intermediate</span> 문제 5 — 외부 API 호출</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="client.py — 사용자 정보를 가져오고 실패 시 재시도">
+      import requests, time, logging
+
+      def fetch_user(user_id):
+          url = "https://api.example.com/users/" + str(user_id)
+          for i in range(3):
+              try:
+                  r = requests.get(url)
+                  return r.json()
+              except:
+                  logging.error("failed")
+                  time.sleep(1)
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L7</b> <code>timeout</code> 없음 → 서버가 응답하지 않으면 영원히 대기 (워커 고갈).</li>
+          <li><b>[Blocking] L8</b> HTTP 상태 검사 없음 → 404/500의 에러 본문을 "사용자 정보"로 반환. 에러 본문이 JSON이 아니면 <code>JSONDecodeError</code> → 재시도.</li>
+          <li><b>[Blocking] L5-11</b> 3회 실패 후 <b>암묵적 <code>None</code></b> 반환 → 호출자가 장애를 "없는 사용자"로 착각. 마지막 실패는 예외로 전파.</li>
+          <li><b>[Blocking] L9</b> bare <code>except</code> → <code>KeyboardInterrupt</code>까지 잡고, 404 같은 재시도해도 소용없는 오류까지 재시도.</li>
+          <li><b>[Suggestion] L10</b> 루트 로거 사용, 컨텍스트(user_id, 시도 횟수)와 traceback 없음.</li>
+          <li><b>[Suggestion] L11</b> 고정 1초 대기 → 지수 백오프 + 지터. 마지막 시도 후 불필요한 sleep.</li>
+          <li><b>[Suggestion]</b> 매 호출마다 새 연결 → <code>Session</code>/<code>Client</code> 재사용(커넥션 풀). 테스트 위해 클라이언트 주입.</li>
+          <li><b>[Nit] L4</b> URL 조립 → <code>f"{BASE}/users/{user_id}"</code>, 문자열 ID라면 <code>urllib.parse.quote</code>.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      import logging, random, time
+      import httpx
+
+      log = logging.getLogger(__name__)
+      RETRYABLE_STATUS = {429, 502, 503, 504}
+
+      class UserNotFound(LookupError): ...
+
+      def fetch_user(client: httpx.Client, user_id: int, *, attempts: int = 3) -> dict:
+          for attempt in range(1, attempts + 1):
+              try:
+                  resp = client.get(f"/users/{user_id}", timeout=5.0)
+                  if resp.status_code == 404:
+                      raise UserNotFound(user_id)
+                  if resp.status_code not in RETRYABLE_STATUS:
+                      resp.raise_for_status()
+                      return resp.json()
+                  log.warning("retryable status %s user_id=%s attempt=%d",
+                              resp.status_code, user_id, attempt)
+              except httpx.TransportError:
+                  log.warning("transport error user_id=%s attempt=%d", user_id, attempt,
+                              exc_info=True)
+                  if attempt == attempts:
+                      raise
+              if attempt < attempts:
+                  time.sleep(0.5 * 2 ** (attempt - 1) + random.uniform(0, 0.1))
+          raise RuntimeError(f"user {user_id}: retries exhausted")
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv mid">Intermediate</span> 문제 6 — 가격 서비스와 캐시</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="pricing.py">
+      from functools import lru_cache
+
+      class PriceService:
+          def __init__(self, db):
+              self.db = db
+
+          @lru_cache(maxsize=None)
+          def get_prices(self, product_ids):
+              ids = ",".join(map(str, product_ids))
+              rows = self.db.query(f"SELECT id, price FROM prices WHERE id IN ({ids})")
+              return {r.id: r.price for r in rows}
+
+          def cheapest(self, product_ids):
+              prices = self.get_prices(tuple(product_ids))
+              prices_sorted = sorted(prices.items(), key=lambda x: x[1])
+              return prices_sorted[0][0]
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L7</b> 메서드에 <code>lru_cache</code> → <code>self</code>가 캐시 키에 포함되어 <code>PriceService</code> 인스턴스와 <code>db</code>가 영원히 해제되지 않음. <code>maxsize=None</code>이라 무한 증가 → 메모리 누수.</li>
+          <li><b>[Blocking]</b> 가격은 바뀌는 데이터인데 TTL/무효화가 없음 → 오래된 가격으로 판매.</li>
+          <li><b>[Blocking] L11</b> 캐시된 <b>가변 dict</b>를 그대로 반환 → 호출자가 수정하면 캐시 오염.</li>
+          <li><b>[Blocking] L10</b> f-string SQL → 지금은 정수라도 문자열 ID가 들어오면 인젝션. 빈 목록이면 <code>IN ()</code> 문법 에러. 파라미터 바인딩.</li>
+          <li><b>[Blocking] L16</b> 결과가 비면 <code>IndexError</code>. 가격 없는 상품 처리 정책 필요.</li>
+          <li><b>[Suggestion] L15</b> 최소값에 정렬 O(n log n) → <code>min(prices, key=prices.get)</code> O(n).</li>
+          <li><b>[Suggestion] L14</b> <code>tuple(product_ids)</code>는 순서·중복이 다르면 다른 키 → 캐시 효율 저하. <code>frozenset</code> 정규화 또는 상품 단위 캐시.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      import time
+      from collections.abc import Iterable, Mapping
+      from decimal import Decimal
+      from types import MappingProxyType
+
+      class PriceService:
+          def __init__(self, db, ttl_s: float = 60.0) -> None:
+              self._db = db
+              self._ttl_s = ttl_s
+              self._cache: dict[int, tuple[Decimal, float]] = {}   # id -> (price, fetched_at)
+
+          def get_prices(self, product_ids: Iterable[int]) -> Mapping[int, Decimal]:
+              ids = set(product_ids)
+              now = time.monotonic()
+              missing = [i for i in ids
+                         if i not in self._cache or now - self._cache[i][1] > self._ttl_s]
+              if missing:
+                  rows = self._db.query(
+                      "SELECT id, price FROM prices WHERE id = ANY(%s)", (missing,))
+                  for r in rows:
+                      self._cache[r.id] = (r.price, now)
+              return MappingProxyType({i: self._cache[i][0] for i in ids if i in self._cache})
+
+          def cheapest(self, product_ids: Iterable[int]) -> int | None:
+              prices = self.get_prices(product_ids)
+              return min(prices, key=prices.__getitem__, default=None)
+      </py>
+      <p class="small">운영에선 캐시 크기 상한(또는 Redis 등 외부 캐시)과 멀티스레드 접근 시 락도 검토.</p>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv mid">Intermediate</span> 문제 7 — 계좌 이체</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="bank.py">
+      def transfer(db, from_id, to_id, amount):
+          try:
+              from_acc = db.get_account(from_id)
+              to_acc = db.get_account(to_id)
+              if from_acc.balance < amount:
+                  raise Exception("insufficient funds")
+              from_acc.balance -= amount
+              db.save(from_acc)
+              to_acc.balance += amount
+              db.save(to_acc)
+              return True
+          except Exception as e:
+              print("transfer error", e)
+              return False
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L7-10</b> 트랜잭션 없음 → <code>from_acc</code> 저장 후 <code>to_acc</code> 저장이 실패하면 <b>돈이 사라짐</b>. 원자적 트랜잭션으로 묶어야 함.</li>
+          <li><b>[Blocking] L3-7</b> 동시성: 같은 계좌로 동시 이체 시 read-modify-write 경쟁 → 잔액 초과 출금(lost update). <code>SELECT ... FOR UPDATE</code>, 낙관적 락(버전 컬럼), 또는 <code>UPDATE ... SET balance = balance - %s WHERE balance >= %s</code>.</li>
+          <li><b>[Blocking]</b> <code>amount</code> 검증 없음: <b>음수 금액</b>이면 역방향 이체(타인 돈 인출), 0, <code>from_id == to_id</code>.</li>
+          <li><b>[Blocking] L12-14</b> 모든 예외를 삼키고 <code>False</code> → 잔액 부족(비즈니스 오류)과 DB 장애·버그(<code>AttributeError</code>)를 구분 못 함. 로그도 <code>print</code>.</li>
+          <li><b>[Suggestion] L6</b> 일반 <code>Exception</code> 대신 <code>InsufficientFundsError</code> 같은 도메인 예외.</li>
+          <li><b>[Suggestion]</b> 금액 타입은 <code>Decimal</code>; 감사(audit) 로그/이체 내역 레코드 필요; 데드락 방지를 위해 계좌 잠금 순서를 ID 순으로 고정.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      class TransferError(Exception): ...
+      class InsufficientFundsError(TransferError): ...
+
+      def transfer(db: Database, from_id: int, to_id: int, amount: Decimal) -> None:
+          if amount <= 0:
+              raise ValueError(f"amount must be positive: {amount}")
+          if from_id == to_id:
+              raise ValueError("cannot transfer to the same account")
+
+          with db.transaction():                              # 예외 시 자동 롤백
+              # 데드락 방지: 항상 같은 순서로 잠금
+              for acc_id in sorted((from_id, to_id)):
+                  db.lock_account(acc_id)                     # SELECT ... FOR UPDATE
+              src = db.get_account(from_id)
+              if src.balance < amount:
+                  raise InsufficientFundsError(from_id)
+              db.adjust_balance(from_id, -amount)
+              db.adjust_balance(to_id, amount)
+              db.record_transfer(from_id, to_id, amount)
+          log.info("transfer ok from=%s to=%s amount=%s", from_id, to_id, amount)
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv mid">Intermediate</span> 문제 8 — 이벤트 로그 집계</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="stats.py — CSV 이벤트 로그에서 일별 이벤트 수 집계">
+      import csv, datetime
+
+      def load_events(path):
+          events = []
+          with open(path) as f:
+              for row in csv.DictReader(f):
+                  row['ts'] = datetime.datetime.strptime(row['ts'], '%Y-%m-%d %H:%M:%S')
+                  events.append(row)
+          return events
+
+      def daily_counts(path):
+          events = load_events(path)
+          counts = {}
+          for e in events:
+              day = e['ts'].date()
+              if day not in counts:
+                  counts[day] = 0
+              counts[day] += 1
+          today = datetime.datetime.now().date()
+          return counts, counts.get(today, 0)
+      </py>
+      <p class="small">로그 파일은 하루 수 GB, 타임스탬프는 UTC로 기록됨.</p>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L19</b> 로그는 UTC인데 <code>now()</code>는 서버 로컬 시간 → 한국(UTC+9) 서버에선 0~9시 사이 "오늘" 집계가 틀림. 날짜 경계도 UTC 기준인지 KST 기준인지 요구사항 확인.</li>
+          <li><b>[Blocking] L4-9</b> 수 GB 파일을 전부 리스트로 로드 → 메모리 폭발. 집계만 필요하므로 스트리밍.</li>
+          <li><b>[Suggestion] L5</b> <code>encoding</code>, <code>newline=""</code> 누락 (csv 모듈 권장 사항: 필드 안 개행 처리).</li>
+          <li><b>[Suggestion] L7</b> 잘못된 행 하나에 전체 작업 실패 → 정책 결정(스킵 + 카운트 로깅 또는 실패).</li>
+          <li><b>[Suggestion] L19-20</b> 현재 시각을 함수 안에서 호출 → 테스트 비결정적. 반환값이 "전체 집계 + 오늘 값" 두 책임 → 분리.</li>
+          <li><b>[Nit] L13-18</b> <code>Counter</code>로 대체. <code>datetime.fromisoformat</code>이 <code>strptime</code>보다 빠름.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      import csv
+      from collections import Counter
+      from collections.abc import Iterable, Iterator
+      from datetime import date, datetime, timezone, tzinfo
+      from pathlib import Path
+      from zoneinfo import ZoneInfo
+
+      def iter_timestamps(path: Path) -> Iterator[datetime]:
+          with path.open(encoding="utf-8", newline="") as f:
+              for row in csv.DictReader(f):
+                  yield datetime.fromisoformat(row["ts"]).replace(tzinfo=timezone.utc)
+
+      def daily_counts(timestamps: Iterable[datetime], tz: tzinfo = timezone.utc) -> Counter[date]:
+          return Counter(ts.astimezone(tz).date() for ts in timestamps)
+
+      # 호출부
+      counts = daily_counts(iter_timestamps(path), tz=ZoneInfo("Asia/Seoul"))
+      today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+      print(counts[today])
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>

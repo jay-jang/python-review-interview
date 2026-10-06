@@ -1,0 +1,259 @@
+<section class="slide divider" data-part="4. 스타일 가이드">
+  <div class="small">PART 4</div>
+  <h1>스타일 가이드</h1>
+  <p class="lead">PEP 8 · PEP 257 · PEP 20 · Google Python Style Guide · 타입 힌트 스타일 · 자동화 도구. "코드는 쓰이는 것보다 훨씬 자주 읽힌다." — PEP 8</p>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>PEP 20 — The Zen of Python (리뷰 근거로 쓰기)</h2>
+  <div class="cols">
+    <div>
+      <p><code>import this</code>로 볼 수 있는 19개 격언 중 리뷰에서 자주 인용하는 것들:</p>
+      <ul>
+        <li><b>Explicit is better than implicit.</b> — 숨은 전역 상태, 마법 같은 메타프로그래밍, <code>from x import *</code> 지적</li>
+        <li><b>Simple is better than complex.</b> — 과도한 추상화, 불필요한 클래스</li>
+        <li><b>Flat is better than nested.</b> — 깊은 중첩 → early return(가드 절)</li>
+        <li><b>Readability counts.</b> — 한 줄 트릭보다 읽히는 코드</li>
+        <li><b>Errors should never pass silently. Unless explicitly silenced.</b> — <code>except: pass</code></li>
+        <li><b>In the face of ambiguity, refuse the temptation to guess.</b> — 애매한 입력은 추측 말고 에러</li>
+        <li><b>There should be one — and preferably only one — obvious way to do it.</b></li>
+        <li><b>If the implementation is hard to explain, it's a bad idea.</b></li>
+      </ul>
+    </div>
+    <div>
+      <py bad cap="❌ 깊은 중첩 (arrow code)">
+      def process(order):
+          if order:
+              if order.paid:
+                  if order.items:
+                      for item in order.items:
+                          ship(item)
+                  else:
+                      raise ValueError("empty")
+      </py>
+      <py good cap="✅ 가드 절(early return)로 평탄화">
+      def process(order: Order | None) -> None:
+          if order is None or not order.paid:
+              return
+          if not order.items:
+              raise ValueError("empty order")
+          for item in order.items:
+              ship(item)
+      </py>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>PEP 8 — 네이밍 규칙</h2>
+  <div class="tablewrap"><table>
+    <tr><th>대상</th><th>규칙</th><th>예시</th><th>비고</th></tr>
+    <tr><td>모듈/패키지</td><td>짧은 소문자, 필요시 _</td><td><code>user_service.py</code>, <code>mypkg</code></td><td>패키지는 _ 지양</td></tr>
+    <tr><td>클래스, 예외, 타입 변수</td><td>CapWords</td><td><code>HttpClient</code>, <code>ParseError</code>, <code>T</code>, <code>AnyStr</code></td><td>예외는 <code>Error</code> 접미사</td></tr>
+    <tr><td>함수, 메서드, 변수</td><td>snake_case</td><td><code>get_user</code>, <code>retry_count</code></td><td></td></tr>
+    <tr><td>상수</td><td>UPPER_SNAKE</td><td><code>MAX_RETRIES = 3</code></td><td>모듈 레벨</td></tr>
+    <tr><td>내부용 (non-public)</td><td>앞에 _ 하나</td><td><code>_cache</code>, <code>_parse()</code></td><td><code>from m import *</code>에서 제외</td></tr>
+    <tr><td>이름 맹글링</td><td>앞에 __ 둘</td><td><code>self.__secret</code> → <code>_Cls__secret</code></td><td>서브클래스 충돌 회피용 (private 용도 아님)</td></tr>
+    <tr><td>키워드 충돌</td><td>뒤에 _</td><td><code>class_</code>, <code>type_</code></td><td></td></tr>
+    <tr><td>메서드 첫 인자</td><td><code>self</code>, <code>cls</code></td><td></td><td></td></tr>
+    <tr><td>사용 안 하는 값</td><td><code>_</code></td><td><code>for _ in range(3)</code></td><td></td></tr>
+  </table></div>
+  <div class="cols">
+    <div class="box bad"><b>피할 이름</b> <code>l</code>, <code>O</code>, <code>I</code> (1, 0과 혼동) · 내장 이름 가리기: <code>list</code>, <code>dict</code>, <code>id</code>, <code>type</code>, <code>input</code>, <code>sum</code>, <code>file</code>, <code>max</code> · 의미 없는 <code>data</code>, <code>tmp</code>, <code>obj</code>, <code>do_stuff</code> · 헝가리안 <code>strName</code></div>
+    <div class="box tip"><b>좋은 이름</b> 불리언은 <code>is_</code>/<code>has_</code>/<code>should_</code> 접두사, 컬렉션은 복수형(<code>users</code>), 단위 포함(<code>timeout_s</code>, <code>size_bytes</code>), 함수는 동사(<code>fetch_orders</code>), 매핑은 <code>user_by_id</code></div>
+  </div>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>PEP 8 — 레이아웃, 공백, import</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li><b>들여쓰기</b>: 스페이스 4칸, 탭과 혼용 금지</li>
+        <li><b>줄 길이</b>: PEP 8 79자(docstring/주석 72), 팀 합의로 99까지 허용. Black/Ruff 기본 88</li>
+        <li><b>빈 줄</b>: 최상위 정의 사이 2줄, 메서드 사이 1줄</li>
+        <li><b>줄바꿈</b>: 백슬래시보다 괄호 안 암시적 연결. 이항 연산자 <b>앞</b>에서 줄바꿈(수학 표기 방식)</li>
+        <li><b>import</b>: 파일 상단, 한 줄에 하나, 그룹 순서 ① 표준 라이브러리 ② 서드파티 ③ 로컬, 그룹 사이 빈 줄. 와일드카드 import 금지. 절대 import 권장</li>
+        <li><b>공백</b>: 괄호 안쪽 공백 X, 쉼표 뒤 O, 키워드 인자 <code>=</code> 주변 X (단, 타입 힌트가 있는 기본값은 <code>x: int = 0</code>)</li>
+        <li><b>비교</b>: <code>is None</code>, <code>isinstance(x, T)</code> (<code>type(x) == T</code> X), <code>if not seq:</code></li>
+        <li><b>후행 쉼표</b>: 여러 줄 컬렉션에 붙이면 diff가 깔끔 (magic trailing comma)</li>
+      </ul>
+    </div>
+    <div>
+      <py>
+      # 표준 라이브러리
+      import json
+      import logging
+      from pathlib import Path
+
+      # 서드파티
+      import httpx
+
+      # 로컬
+      from myapp.models import User
+
+      log = logging.getLogger(__name__)
+
+      income = (gross_wages
+                + taxable_interest
+                + (dividends - qualified_dividends)
+                - ira_deduction)
+
+      def connect(host: str, port: int = 5432, *, timeout: float = 3.0) -> None: ...
+
+      spam(ham[1], {eggs: 2})        # O
+      spam( ham[ 1 ], { eggs: 2 } )  # X
+      x = x * 2 - 1                  # O
+      hypot2 = x*x + y*y             # O (우선순위 강조)
+      </py>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>PEP 257 Docstring과 주석</h2>
+  <div class="cols">
+    <div>
+      <py cap="Google 스타일 docstring">
+      def fetch_orders(user_id: int, *, since: date | None = None) -> list[Order]:
+          """Return orders placed by a user, newest first.
+
+          Args:
+              user_id: ID of the user.
+              since: If given, only orders on or after this date.
+
+          Returns:
+              Orders sorted by ``created_at`` descending. Empty if none.
+
+          Raises:
+              UserNotFoundError: If the user does not exist.
+          """
+      </py>
+      <ul class="small">
+        <li>첫 줄: 마침표로 끝나는 한 줄 요약 (명령형 "Return …")</li>
+        <li>항상 <code>"""삼중 큰따옴표"""</code></li>
+        <li>타입 힌트가 있으면 docstring에 타입 중복 기술 불필요</li>
+        <li>NumPy 스타일, reST(Sphinx) 스타일도 일관되기만 하면 OK</li>
+      </ul>
+    </div>
+    <div>
+      <h3>주석은 "왜"를 쓴다</h3>
+      <py bad>
+      i += 1  # i 를 1 증가
+      # user 를 가져온다
+      user = get_user(uid)
+      # x = old_algorithm(data)   ← 죽은 코드
+      </py>
+      <py good>
+      # 외부 API 가 0-based 페이지를 1-based 로 바꿨음 (v2, 2024-03)
+      page += 1
+      # NOTE: 정렬 안정성(stable)에 의존 — 같은 점수면 가입일 순서 유지
+      users.sort(key=lambda u: u.score, reverse=True)
+      # TODO(jay): 결제 v3 마이그레이션 후 제거 (#1234)
+      </py>
+      <div class="box"><b>리뷰 포인트</b> 주석이 코드와 어긋나면 주석이 없는 것보다 나쁩니다. 주석이 필요하다고 느끼면 먼저 <b>이름을 바꾸거나 함수로 추출</b>해서 코드가 스스로 설명하게 할 수 있는지 봅니다. 주석 처리된 코드는 VCS가 있으니 삭제.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>타입 힌트 스타일 (PEP 484 / 585 / 604 / 695)</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ 구식/부정확한 힌트">
+      from typing import List, Dict, Optional, Union, Any
+
+      def f(xs: List[int], m: Dict[str, Any]) -> Optional[Union[int, str]]:
+          ...
+
+      def g(items: list = None):   # 암시적 Optional, 원소 타입 없음
+          ...
+      </py>
+      <py good cap="✅ 모던 문법 (3.9+ / 3.10+ / 3.12+)">
+      from collections.abc import Iterable, Mapping, Sequence
+
+      def f(xs: Sequence[int], m: Mapping[str, object]) -> int | str | None:
+          ...
+
+      def g(items: Iterable[str] | None = None) -> list[str]:
+          ...
+
+      type UserId = int                      # 3.12 타입 별칭
+      def first[T](xs: Sequence[T]) -> T:    # 3.12 제네릭 문법
+          return xs[0]
+      </py>
+    </div>
+    <div>
+      <ul>
+        <li><b>인자는 넓게, 반환은 구체적으로</b> (Postel 원칙): 받을 때 <code>Iterable</code>/<code>Sequence</code>/<code>Mapping</code>, 돌려줄 때 <code>list</code>/<code>dict</code>.</li>
+        <li><b><code>Any</code>는 타입 검사 포기</b>. 정말 아무거나면 <code>object</code>가 더 안전 (메서드 호출 시 검사됨).</li>
+        <li><code>Optional[X]</code>는 "생략 가능"이 아니라 "None 가능"이라는 뜻.</li>
+        <li>공개 API는 반드시 힌트. 내부 지역 변수는 추론에 맡김.</li>
+        <li><code>from __future__ import annotations</code>: 힌트를 문자열로 지연 평가 (3.14에선 PEP 649로 기본 지연 평가).</li>
+        <li><code>cast()</code>/<code># type: ignore</code>가 많으면 설계 문제의 신호. ignore에는 에러 코드 명시: <code># type: ignore[attr-defined]</code>.</li>
+        <li>타입 힌트는 <b>런타임에 강제되지 않는다</b> → 외부 입력은 별도 검증.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>Google Python Style Guide 핵심 (PEP 8 외 추가 규칙)</h2>
+  <div class="grid-cards">
+    <div class="card"><h4>Imports</h4>패키지/모듈 단위로 import (<code>from sound.effects import echo</code> 후 <code>echo.f()</code>). 함수/클래스 개별 import는 typing 등 예외적으로.</div>
+    <div class="card"><h4>Exceptions</h4>내장 예외를 의미에 맞게 사용, <code>assert</code>로 인자 검증 금지(<code>-O</code>에서 제거됨), catch-all 금지, try 블록 최소화.</div>
+    <div class="card"><h4>Mutable Global State</h4>지양. 필요하면 모듈 내부(<code>_name</code>)로 두고 접근 함수 제공.</div>
+    <div class="card"><h4>Comprehensions</h4>간단한 경우만. 여러 <code>for</code> 절이나 복잡한 필터는 금지.</div>
+    <div class="card"><h4>Default Arguments</h4>가변 객체를 기본값으로 쓰지 말 것.</div>
+    <div class="card"><h4>Lambda</h4>한 줄짜리만. 길면 중첩 함수. <code>operator</code> 모듈 우선.</div>
+    <div class="card"><h4>Conditional Expressions</h4>한 줄에 들어가는 간단한 경우만.</div>
+    <div class="card"><h4>Properties</h4>가벼운 계산·검증에만. 비싼 연산/부수효과는 메서드로.</div>
+    <div class="card"><h4>Power Features</h4>메타클래스, 바이트코드 조작, <code>__del__</code>, 리플렉션 해킹 등은 피한다 — 읽고 디버그하기 어렵다.</div>
+    <div class="card"><h4>Main</h4>스크립트도 <code>if __name__ == "__main__": main()</code> — import 시 부수효과 방지.</div>
+    <div class="card"><h4>Getters/Setters</h4>단순 접근은 공개 속성. 의미 있는 로직이 생기면 property로 전환 (호출자 수정 불필요).</div>
+    <div class="card"><h4>Function Length</h4>약 40줄을 넘으면 분리 가능한지 검토.</div>
+  </div>
+</section>
+
+<section class="slide" data-part="4. 스타일 가이드">
+  <h2>스타일은 도구에 맡긴다: Ruff, mypy/pyright, pre-commit</h2>
+  <div class="cols">
+    <div>
+      <py lang="toml" cap="pyproject.toml 예시">
+      [tool.ruff]
+      line-length = 100
+      target-version = "py312"
+
+      [tool.ruff.lint]
+      select = [
+          "E", "W", "F",   # pycodestyle, pyflakes
+          "I",             # isort
+          "B",             # flake8-bugbear (가변 기본값, 루프 클로저 등)
+          "UP",            # pyupgrade (모던 문법)
+          "SIM",           # 단순화
+          "C4",            # 컴프리헨션
+          "PL",            # pylint 규칙 일부
+          "S",             # bandit 보안
+          "RUF",
+      ]
+
+      [tool.mypy]
+      strict = true
+      warn_unreachable = true
+      </py>
+    </div>
+    <div>
+      <div class="tablewrap"><table>
+        <tr><th>도구</th><th>역할</th></tr>
+        <tr><td>Ruff</td><td>초고속 린터 + 포매터(Black 호환). flake8, isort, pyupgrade, bugbear 등 대체</td></tr>
+        <tr><td>Black / <code>ruff format</code></td><td>의견이 강한 포매터 → 스타일 논쟁 종결</td></tr>
+        <tr><td>mypy / pyright</td><td>정적 타입 검사 (pyright는 VS Code Pylance 엔진)</td></tr>
+        <tr><td>pre-commit</td><td>커밋 전 훅으로 위 도구 자동 실행</td></tr>
+        <tr><td>pytest + coverage</td><td>테스트·커버리지</td></tr>
+        <tr><td>bandit / pip-audit</td><td>보안 정적 분석, 의존성 취약점</td></tr>
+        <tr><td>uv / poetry</td><td>의존성·가상환경·락파일 관리</td></tr>
+      </table></div>
+      <div class="box tip"><b>인터뷰에서 말하기</b> "들여쓰기와 따옴표 같은 이슈는 여러 곳에 보이지만, 개별 코멘트 대신 Ruff 포매터와 pre-commit 도입을 제안하고, 리뷰는 로직에 집중하겠습니다." — 리뷰 효율성을 아는 사람이라는 인상을 줍니다.</div>
+    </div>
+  </div>
+</section>

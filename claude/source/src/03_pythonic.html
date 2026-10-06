@@ -1,0 +1,350 @@
+<section class="slide divider" data-part="3. Pythonic 문법과 관용구">
+  <div class="small">PART 3</div>
+  <h1>Pythonic 문법과 관용구</h1>
+  <p class="lead">"동작하는 코드"를 "Python다운 코드"로 바꾸는 표현들. 리뷰에서 가장 자주 쓰게 될 제안의 원천입니다.</p>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>컴프리헨션: 언제 쓰고 언제 피하나</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      result = []
+      for u in users:
+          if u.active:
+              result.append(u.email.lower())
+      </py>
+      <py good>
+      emails = [u.email.lower() for u in users if u.active]
+      by_id = {u.id: u for u in users}          # dict
+      domains = {e.split("@")[1] for e in emails}  # set
+      total = sum(o.price for o in orders)      # 제너레이터 식: 괄호 생략 가능
+      </py>
+      <div class="box tip"><b>메모리</b> 합계/최대/any/all 처럼 한 번만 소비할 때는 리스트가 아닌 <b>제너레이터 식</b>을 넘기세요: <code>any(x &gt; 0 for x in xs)</code>는 단락 평가(short-circuit)도 됩니다.</div>
+    </div>
+    <div>
+      <py bad cap="❌ 너무 영리한 컴프리헨션">
+      matrix = [[r * c if (r + c) % 2 else -1 for c in range(n) if c != r]
+                for r in range(n) if r % 3 for _ in range(2)]
+
+      # 부수효과만을 위한 컴프리헨션
+      [print(x) for x in items]          # 버려지는 리스트 생성
+      </py>
+      <ul>
+        <li>중첩 2단계 이상, 조건이 여러 개면 <b>일반 for 문</b>이나 헬퍼 함수가 낫습니다.</li>
+        <li>부수효과(출력, append, DB 저장)는 for 문으로.</li>
+        <li><code>list(map(lambda x: x * 2, xs))</code> → <code>[x * 2 for x in xs]</code>가 더 읽기 쉽습니다. 이미 있는 함수라면 <code>map(str, xs)</code>는 괜찮습니다.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>언패킹, enumerate, zip</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      for i in range(len(names)):
+          print(i, names[i], scores[i])
+
+      tmp = a; a = b; b = tmp
+      first = row[0]; rest = row[1:]
+      </py>
+      <py good>
+      for i, (name, score) in enumerate(zip(names, scores, strict=True), start=1):
+          print(i, name, score)
+
+      a, b = b, a
+      first, *rest = row
+      head, *_, tail = row
+      (x, y), z = (1, 2), 3          # 중첩 언패킹
+      merged = {**defaults, **overrides}   # 또는 defaults | overrides (3.9+)
+      </py>
+    </div>
+    <div>
+      <div class="box warn"><b>zip 의 조용한 잘림</b> <code>zip</code>은 가장 짧은 쪽에 맞춰 <b>에러 없이</b> 잘라냅니다. 길이가 같아야 하는 데이터라면 3.10+의 <code>zip(..., strict=True)</code>로 <code>ValueError</code>를 받으세요. 긴 쪽을 채우려면 <code>itertools.zip_longest</code>.</div>
+      <py cap="딕셔너리 순회 관용구">
+      for key, value in config.items(): ...
+      for key in config: ...            # .keys() 불필요
+      count = counts.get(word, 0) + 1
+      groups.setdefault(k, []).append(v)
+
+      # 정렬 키
+      top = sorted(users, key=lambda u: (-u.score, u.name))[:10]
+      oldest = max(users, key=operator.attrgetter("age"))
+      </py>
+      <p class="small">dict는 3.7부터 <b>삽입 순서 보장</b>이 언어 명세입니다. <code>OrderedDict</code>는 <code>move_to_end</code>나 순서를 고려한 동등성 비교가 필요할 때만.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>EAFP vs LBYL</h2>
+  <div class="cols">
+    <div>
+      <p><b>LBYL</b> (Look Before You Leap): 먼저 검사하고 실행.<br><b>EAFP</b> (Easier to Ask Forgiveness than Permission): 일단 실행하고 예외 처리. Python 커뮤니티는 대체로 EAFP를 선호합니다.</p>
+      <py bad cap="❌ LBYL + 경쟁 조건(TOCTOU)">
+      import os
+      if os.path.exists(path):        # 검사 시점
+          with open(path) as f:       # 사용 시점 - 그 사이 삭제되면?
+              data = f.read()
+      </py>
+      <py good>
+      try:
+          with open(path, encoding="utf-8") as f:
+              data = f.read()
+      except FileNotFoundError:
+          data = ""
+      </py>
+    </div>
+    <div>
+      <py cap="EAFP 의 올바른 범위: try 블록을 좁게">
+      # ❌ try 가 너무 넓어 엉뚱한 KeyError 까지 삼킴
+      try:
+          user = users[uid]
+          send(user["email"], build_body(user))
+      except KeyError:
+          user = None
+
+      # ✅
+      try:
+          user = users[uid]
+      except KeyError:
+          log.warning("unknown user %s", uid)
+          return
+      send(user["email"], build_body(user))
+      </py>
+      <div class="box"><b>균형</b> 예외가 "정상 흐름"에서 매우 자주 발생하면(예: 90%가 키 없음) <code>dict.get</code> 같은 LBYL이 더 명확하고 빠를 수 있습니다. 3.11부터 예외가 발생하지 않는 <code>try</code>는 비용이 거의 0 입니다(zero-cost exceptions).</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>컨텍스트 매니저 (with)</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      f = open("out.txt", "w")
+      f.write(render())      # 예외 시 파일이 닫히지 않음
+      f.close()
+
+      lock.acquire()
+      do_work()              # 예외 시 락이 영원히 잡힘
+      lock.release()
+      </py>
+      <py good>
+      with open("out.txt", "w", encoding="utf-8") as f:
+          f.write(render())
+
+      with lock:
+          do_work()
+
+      # 여러 개 (3.10+ 괄호 지원)
+      with (
+          open(src, "rb") as fin,
+          open(dst, "wb") as fout,
+      ):
+          shutil.copyfileobj(fin, fout)
+      </py>
+    </div>
+    <div>
+      <py cap="contextlib 로 직접 만들기">
+      from contextlib import contextmanager, suppress, ExitStack
+      import time
+
+      @contextmanager
+      def timer(name: str):
+          start = time.perf_counter()
+          try:
+              yield
+          finally:                    # 예외가 나도 실행되게 finally!
+              log.info("%s took %.3fs", name, time.perf_counter() - start)
+
+      with timer("load"):
+          load()
+
+      with suppress(FileNotFoundError):
+          os.remove(tmp)
+
+      with ExitStack() as stack:      # 개수가 동적인 리소스
+          files = [stack.enter_context(open(p)) for p in paths]
+      </py>
+      <div class="box warn"><b>리뷰 포인트</b> <code>@contextmanager</code>에서 <code>yield</code>를 <code>try/finally</code>로 감싸지 않으면 예외 시 정리 코드가 실행되지 않습니다. <code>__exit__</code>이 <code>True</code>를 반환하면 예외를 삼키므로 주의.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>f-string, 문자열 처리</h2>
+  <div class="cols">
+    <div>
+      <py>
+      name, price, ratio = "py", 1234.5678, 0.256
+      f"{name!r:>8}"        # "    'py'"  변환(!r) + 정렬
+      f"{price:,.2f}"       # '1,234.57'
+      f"{ratio:.1%}"        # '25.6%'
+      f"{42:08b}"           # '00101010'
+      f"{price=}"           # 'price=1234.5678'  디버깅 (3.8+)
+      f"{now:%Y-%m-%d}"     # datetime 포맷
+      </py>
+      <py bad cap="❌ 루프 안 문자열 += (이차 시간 가능)">
+      s = ""
+      for row in rows:
+          s += ",".join(row) + "\n"
+      </py>
+      <py good>
+      s = "\n".join(",".join(row) for row in rows)
+      # CSV 는 직접 만들지 말고 csv 모듈 (따옴표/이스케이프 처리)
+      </py>
+    </div>
+    <div>
+      <div class="box warn"><b>로깅에는 f-string 대신 % 지연 포맷</b><br><code>log.debug(f"user={user}")</code>는 DEBUG가 꺼져 있어도 문자열을 만듭니다. <code>log.debug("user=%s", user)</code>는 필요할 때만 포맷하고, Sentry 같은 도구가 같은 메시지를 그룹핑할 수 있습니다.</div>
+      <div class="box bad"><b>보안</b> SQL/셸 명령을 f-string으로 조립하지 마세요 → 파라미터 바인딩, 인자 리스트 사용 (보안 슬라이드 참조).</div>
+      <py cap="유용한 str 메서드">
+      s.removeprefix("v")     # 3.9+ (lstrip("v") 은 문자 집합 제거라 다름!)
+      s.removesuffix(".txt")
+      s.casefold()            # 대소문자 무시 비교에 lower() 보다 정확 (ß → ss)
+      s.partition("=")        # ('key', '=', 'value')
+      "".join(reversed(s))
+      s.startswith(("http://", "https://"))  # 튜플 허용
+      </py>
+      <p class="small"><code>"v1.0v".strip("v")</code>처럼 strip 계열은 <b>문자열이 아니라 문자 집합</b>을 제거한다는 점이 흔한 실수입니다: <code>"test.txt".rstrip(".txt")</code> → <code>'tes'</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>for-else, try-else-finally, walrus</h2>
+  <div class="cols">
+    <div>
+      <py cap="for ... else: break 없이 끝났을 때 실행">
+      for host in hosts:
+          if ping(host):
+              primary = host
+              break
+      else:
+          raise RuntimeError("no reachable host")
+      </py>
+      <py cap="try / except / else / finally">
+      try:
+          conn = connect()
+      except ConnectionError:
+          log.exception("connect failed")
+          raise
+      else:
+          # try 에서 예외가 없을 때만. 여기서 난 예외는 위 except 가 안 잡음
+          process(conn)
+      finally:
+          cleanup()
+      </py>
+      <div class="box warn"><code>finally</code> 안의 <code>return</code>/<code>break</code>는 진행 중인 예외를 <b>삼킵니다</b>. 3.14부터 SyntaxWarning (PEP 765).</div>
+    </div>
+    <div>
+      <py cap="대입 표현식 := (3.8+)">
+      # 중복 호출 제거
+      if (m := PATTERN.match(line)) is not None:
+          handle(m.group(1))
+
+      # 청크 읽기 루프
+      while chunk := f.read(65536):
+          h.update(chunk)
+
+      # 컴프리헨션에서 계산 재사용
+      results = [y for x in data if (y := expensive(x)) is not None]
+      </py>
+      <div class="box"><b>리뷰 기준</b> walrus는 중복 계산이나 어색한 <code>while True: ... break</code>를 없앨 때 좋지만, 복잡한 조건 안에 숨기면 가독성이 떨어집니다. 우선순위 때문에 <code>(m := f()) is not None</code>처럼 <b>괄호</b>가 필요한 경우가 많습니다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>구조적 패턴 매칭 match (3.10+)</h2>
+  <div class="cols">
+    <div>
+      <py>
+      def handle(event: dict) -> str:
+          match event:
+              case {"type": "click", "pos": (x, y)}:
+                  return f"click at {x},{y}"
+              case {"type": "key", "key": str(k)} if k.isprintable():
+                  return f"key {k}"
+              case {"type": "scroll", "delta": int() | float() as d}:
+                  return f"scroll {d}"
+              case {"type": t}:
+                  return f"unknown {t}"
+              case _:
+                  raise ValueError(event)
+
+      @dataclass
+      class Point:
+          x: int
+          y: int
+
+      match p:
+          case Point(x=0, y=0): ...
+          case Point(x=0, y=y): ...       # y 에 캡처
+          case [first, *others]: ...      # 시퀀스 패턴
+      </py>
+    </div>
+    <div>
+      <div class="box bad"><b>가장 흔한 실수: 이름은 캡처 패턴</b>
+      <py>
+      RED = "red"
+      match color:
+          case RED:      # 비교가 아니라 'RED' 라는 변수에 캡처! 항상 매칭
+              ...
+          case "blue":
+              ...
+      # SyntaxError: name capture 'RED' makes remaining patterns unreachable
+      # (뒤에 case 가 없으면 에러 없이 조용히 모든 값에 매칭되고 RED 를 덮어씀)
+      </py>
+      비교하려면 점이 들어간 이름(<code>Color.RED</code>, <code>consts.RED</code>)을 쓰세요.</div>
+      <ul>
+        <li>dict 패턴은 <b>부분 매칭</b>(추가 키 허용), 시퀀스 패턴은 길이까지 매칭</li>
+        <li><code>str</code>은 시퀀스 패턴에 매칭되지 않음</li>
+        <li>단순 값 분기 3~4개라면 <code>if/elif</code>나 dict 디스패치가 더 단순할 수 있음 → 구조 분해가 필요할 때 쓰는 것이 리뷰 기준</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="3. Pythonic 문법과 관용구">
+  <h2>dataclass, NamedTuple, Enum</h2>
+  <div class="cols">
+    <div>
+      <py>
+      from dataclasses import dataclass, field
+      from enum import Enum, auto
+
+      class Status(Enum):
+          ACTIVE = auto()
+          BANNED = auto()
+
+      @dataclass(frozen=True, slots=True, kw_only=True)
+      class User:
+          id: int
+          email: str
+          status: Status = Status.ACTIVE
+          tags: list[str] = field(default_factory=list)   # 가변 기본값
+
+          def __post_init__(self) -> None:
+              if "@" not in self.email:
+                  raise ValueError(f"invalid email: {self.email!r}")
+
+      u = User(id=1, email="a@b.c")
+      u2 = dataclasses.replace(u, status=Status.BANNED)  # 불변 업데이트
+      </py>
+    </div>
+    <div>
+      <div class="tablewrap"><table>
+        <tr><th>선택지</th><th>쓸 때</th></tr>
+        <tr><td><code>dataclass</code></td><td>일반적인 데이터 객체. 기본은 가변, <code>frozen</code>으로 불변</td></tr>
+        <tr><td><code>typing.NamedTuple</code></td><td>튜플 호환(언패킹, 인덱싱)이 필요할 때, 가볍고 불변</td></tr>
+        <tr><td><code>TypedDict</code></td><td>JSON 같은 dict 구조에 타입만 붙일 때 (런타임 검증 없음)</td></tr>
+        <tr><td>pydantic / attrs</td><td>외부 입력 검증·직렬화(pydantic), 고급 기능(attrs)</td></tr>
+        <tr><td><code>Enum</code>/<code>StrEnum</code></td><td>문자열/숫자 "매직 값" 대체. 3.11+ <code>StrEnum</code></td></tr>
+      </table></div>
+      <div class="box warn"><b>리뷰 포인트</b><br>• <code>tags: list = []</code> → dataclass가 <code>ValueError</code>로 막아줌. <code>field(default_factory=list)</code><br>• <code>frozen=True</code>여도 내부 리스트는 변경 가능 → <code>tuple</code> 고려<br>• <code>eq=True</code>이고 <code>frozen=False</code>면 <code>__hash__</code>가 <code>None</code> (set/dict 키 불가)<br>• 외부 입력은 dataclass만으로 검증되지 않음</div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,417 @@
+<section class="slide divider" data-part="5. 흔한 실수 (Junior)">
+  <div class="small">PART 5 · <span class="lv jr">Junior</span></div>
+  <h1>리뷰에서 반드시 잡아야 할<br>흔한 실수 20선</h1>
+  <p class="lead">인터뷰용 코드에는 이 중 2~4개가 거의 반드시 숨어 있습니다. 패턴으로 외워 두면 몇 초 만에 발견할 수 있습니다.</p>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>① 가변 기본 인자 (Mutable Default Argument)</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      def add_tag(tag, tags=[]):
+          tags.append(tag)
+          return tags
+
+      print(add_tag("a"))   # ['a']
+      print(add_tag("b"))   # ['a', 'b']  ← ?!
+      </py>
+      <p>기본값은 <b>함수 정의 시점에 한 번</b> 평가되어 함수 객체(<code>add_tag.__defaults__</code>)에 저장됩니다. 모든 호출이 같은 리스트를 공유합니다. <code>dict</code>, <code>set</code>, 사용자 객체도 마찬가지.</p>
+    </div>
+    <div>
+      <py good>
+      def add_tag(tag: str, tags: list[str] | None = None) -> list[str]:
+          if tags is None:
+              tags = []
+          tags.append(tag)
+          return tags
+      </py>
+      <div class="box warn"><b>같은 원리의 변형</b>
+      <py>
+      def log(msg, when=datetime.now()):   # 정의 시점 시각으로 고정!
+          ...
+      def handler(req, cache={}):          # 의도된 메모이제이션이라도
+          ...                              # 숨은 전역 상태 → lru_cache 사용
+      </py></div>
+      <p class="small">Ruff/flake8-bugbear 규칙 <code>B006</code>, <code>B008</code>이 자동으로 잡습니다.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>② 클로저의 늦은 바인딩 (Late Binding)</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      funcs = [lambda: i for i in range(3)]
+      print([f() for f in funcs])     # [2, 2, 2]
+
+      buttons = []
+      for name in ["ok", "cancel"]:
+          buttons.append(Button(on_click=lambda: handle(name)))
+      # 두 버튼 모두 handle("cancel")
+      </py>
+      <p>클로저는 값이 아니라 <b>변수(셀)</b>를 캡처합니다. 함수가 <b>호출될 때</b> 변수를 조회하므로 루프의 마지막 값이 보입니다.</p>
+    </div>
+    <div>
+      <py good>
+      # 1) 기본 인자로 현재 값 고정 (관용구)
+      funcs = [lambda i=i: i for i in range(3)]
+
+      # 2) functools.partial
+      from functools import partial
+      buttons = [Button(on_click=partial(handle, name)) for name in names]
+
+      # 3) 팩토리 함수
+      def make_handler(name):
+          return lambda: handle(name)
+      </py>
+      <div class="box"><b>비동기 코드에서도</b> 루프 안에서 콜백/태스크를 만들 때 동일하게 발생합니다 (<code>loop.call_later(1, lambda: print(i))</code>). Ruff <code>B023</code>.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>③ 순회 중 컬렉션 수정</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      nums = [1, 2, 2, 3, 4]
+      for n in nums:
+          if n % 2 == 0:
+              nums.remove(n)
+      print(nums)       # [1, 2, 3]  ← 2 하나가 남음 (인덱스 건너뜀)
+
+      d = {"a": 1, "b": 2}
+      for k in d:
+          if d[k] == 1:
+              del d[k]  # RuntimeError: dictionary changed size during iteration
+      </py>
+    </div>
+    <div>
+      <py good>
+      nums = [n for n in nums if n % 2 != 0]        # 새 리스트
+      nums[:] = [n for n in nums if n % 2 != 0]     # 같은 객체 유지가 필요하면
+
+      d = {k: v for k, v in d.items() if v != 1}
+      for k in list(d):                              # 키 스냅샷 후 삭제
+          if d[k] == 1:
+              del d[k]
+      </py>
+      <div class="box warn"><b>리뷰 포인트</b> 리스트에선 <b>에러 없이 틀린 결과</b>가 나와서 더 위험합니다. 인덱스로 역순 순회(<code>for i in reversed(range(len(xs)))</code>)도 가능하지만 컴프리헨션이 가장 명확합니다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>④ 예외를 삼키거나 너무 넓게 잡기</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      try:
+          result = compute(data)
+      except:                 # KeyboardInterrupt, SystemExit 까지 잡음
+          pass                # 에러가 조용히 사라짐
+
+      try:
+          user = repo.get(uid)
+      except Exception as e:
+          print(e)            # print 로 로그, 스택트레이스 유실
+          return None         # 호출자는 "없음"과 "장애"를 구분 못함
+
+      try:
+          ...
+      except ValueError as e:
+          raise e             # traceback 에 재발생 지점이 추가됨 → 그냥 raise
+      </py>
+    </div>
+    <div>
+      <py good>
+      try:
+          result = compute(data)
+      except (ValueError, ZeroDivisionError) as exc:   # 예상한 것만
+          log.warning("compute failed for %s: %s", data.id, exc)
+          result = DEFAULT
+      # 예상 못한 예외는 위로 전파 → 상위에서 log.exception()
+
+      try:
+          row = db.fetch(uid)
+      except DatabaseError as exc:
+          raise UserLookupError(uid) from exc   # 원인 체인 보존
+      </py>
+      <ul class="small">
+        <li><code>except:</code>는 <code>except BaseException:</code>과 같음 → 최소 <code>Exception</code></li>
+        <li>최상위 경계(요청 핸들러, 워커 루프)에서만 넓게 잡고 <code>log.exception()</code>으로 기록</li>
+        <li>예외를 잡았으면 처리하거나, 정보를 더해 다시 던지거나 — 둘 중 하나</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑤ 내장 이름·모듈 이름 가리기 ⑥ 클래스 변수 공유</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ 내장 이름 섀도잉">
+      list = [1, 2, 3]
+      ...
+      items = list(range(5))   # TypeError: 'list' object is not callable
+
+      def process(id, type, input): ...    # id(), type(), input() 가려짐
+      </py>
+      <div class="box warn"><b>모듈 이름 충돌</b> 프로젝트에 <code>random.py</code>, <code>email.py</code>, <code>logging.py</code>, <code>test.py</code>를 만들면 표준 라이브러리 대신 이 파일이 import 되어 이상한 <code>AttributeError</code>가 납니다. (3.13부터 에러 메시지가 이를 알려줌)</div>
+    </div>
+    <div>
+      <py bad cap="❌ 가변 클래스 변수">
+      class Cart:
+          items = []                  # 모든 인스턴스가 공유!
+          def add(self, x):
+              self.items.append(x)
+
+      a, b = Cart(), Cart()
+      a.add("apple")
+      print(b.items)                  # ['apple']
+      </py>
+      <py good>
+      class Cart:
+          def __init__(self) -> None:
+              self.items: list[str] = []
+      </py>
+      <p class="small">불변 값(<code>count = 0</code>)은 <code>self.count += 1</code> 시 인스턴스 속성이 새로 생겨 문제가 드러나지 않습니다 → 그래서 가변일 때만 터지는 미묘한 버그.</p>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑦ 불리언 로직 ⑧ None 반환 메서드 체이닝</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ 항상 True">
+      if answer == "y" or "yes":       # == "y" or ("yes") → "yes" 는 truthy
+          proceed()
+      </py>
+      <py good>
+      if answer in {"y", "yes"}:
+          proceed()
+      </py>
+      <py bad cap="❌ and/or 반환값 오해">
+      name = user and user.name or "anonymous"
+      # user.name 이 "" 이면 "anonymous" 가 됨
+      </py>
+      <py good>
+      name = user.name if user is not None else "anonymous"
+      </py>
+      <p class="small"><code>and</code>/<code>or</code>는 bool이 아니라 <b>피연산자 자체</b>를 반환합니다. 비교 연쇄 <code>0 &lt; x &lt; 10</code>은 OK, 하지만 <code>a == b == c</code>나 <code>x &lt; y &gt; z</code>처럼 헷갈리는 연쇄는 피하세요.</p>
+    </div>
+    <div>
+      <py bad cap="❌ in-place 메서드는 None 반환">
+      sorted_names = names.sort()        # None
+      result = items.append(4)           # None
+      words = text.split().reverse()     # None
+      d = d.update(other)                # d 가 None 이 됨
+      </py>
+      <py good>
+      names.sort()                       # 제자리 정렬
+      sorted_names = sorted(names)       # 새 리스트
+      words = text.split()[::-1]
+      d.update(other)  # 또는 d = d | other
+      </py>
+      <div class="box">"명령-질의 분리": Python 내장 컬렉션은 <b>변경하는 메서드는 None</b>을 반환하는 컨벤션. 내 API도 이 컨벤션을 따르는 것이 좋습니다.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑨ 숫자: 부동소수점, 반올림, 정수 나눗셈</h2>
+  <div class="cols">
+    <div>
+      <py console>
+      >>> 0.1 + 0.2
+      0.30000000000000004
+      >>> round(2.5), round(3.5), round(0.125, 2)
+      (2, 4, 0.12)
+      >>> -7 // 2, -7 % 2, int(-7 / 2)
+      (-4, 1, -3)
+      >>> True + True, isinstance(True, int)
+      (2, True)
+      >>> 10 / 2
+      5.0
+      </py>
+      <ul class="small">
+        <li><code>round</code>는 <b>은행가 반올림</b>(짝수로) + 이진 표현 오차</li>
+        <li><code>//</code>는 음의 무한대 방향 내림, <code>int()</code>는 0 방향 절삭</li>
+        <li><code>bool</code>은 <code>int</code>의 서브클래스 → <code>isinstance(x, int)</code> 검사에 <code>True</code>가 통과</li>
+      </ul>
+    </div>
+    <div>
+      <py good cap="✅ 금액은 Decimal 또는 정수 최소단위">
+      from decimal import Decimal, ROUND_HALF_UP
+
+      price = Decimal("19.99")          # 문자열로 생성! Decimal(19.99) 는 오차 포함
+      tax = (price * Decimal("0.1")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+      cents = 1999                      # 또는 정수 센트로 저장
+
+      import math
+      math.isclose(0.1 + 0.2, 0.3)      # True
+      math.fsum([0.1] * 10)             # 1.0  (sum 은 0.9999999999999999)
+      </py>
+      <div class="box warn"><b>평균 계산의 0 나누기</b> <code>sum(xs) / len(xs)</code>는 빈 리스트에서 <code>ZeroDivisionError</code>. 인터뷰 코드의 단골 버그입니다. <code>statistics.fmean</code>도 빈 입력에 <code>StatisticsError</code>.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑩ 리소스와 인코딩 ⑪ 시간대(naive datetime)</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      data = open("users.json").read()          # 닫히지 않음, 인코딩 OS 의존
+      json.load(open(path))
+      requests.get(url)                          # timeout 없음 → 무한 대기
+      conn = sqlite3.connect(db); cur = conn.cursor()  # close/commit 누락
+      </py>
+      <py good>
+      from pathlib import Path
+      data = Path("users.json").read_text(encoding="utf-8")
+      with open(path, encoding="utf-8") as f:
+          cfg = json.load(f)
+      resp = httpx.get(url, timeout=5.0)
+      resp.raise_for_status()
+      </py>
+      <p class="small">Windows 기본 인코딩은 UTF-8이 아닐 수 있습니다(cp949 등). PEP 686에 따라 3.15부터 UTF-8 모드가 기본이 되지만, 명시하는 것이 안전합니다. Ruff <code>PLW1514</code>.</p>
+    </div>
+    <div>
+      <py bad>
+      from datetime import datetime
+      now = datetime.now()          # 로컬 시간, tzinfo 없음 (naive)
+      ts = datetime.utcnow()        # naive UTC — 3.12 부터 deprecated
+      if expires_at < now: ...      # aware 와 비교하면 TypeError
+      </py>
+      <py good>
+      from datetime import datetime, timezone, timedelta
+      from zoneinfo import ZoneInfo
+
+      now = datetime.now(timezone.utc)                  # aware UTC
+      seoul = now.astimezone(ZoneInfo("Asia/Seoul"))
+      deadline = now + timedelta(days=7)
+      </py>
+      <div class="box"><b>원칙</b> 저장·비교·계산은 UTC aware, 표시할 때만 로컬 변환. 경과 시간 측정은 <code>time.monotonic()</code>/<code>perf_counter()</code> (시스템 시계 변경에 영향 없음).</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑫ 비효율 자료구조 선택 ⑬ 문자열 반복 결합</h2>
+  <div class="cols">
+    <div>
+      <py bad cap="❌ O(n·m) 멤버십 검사 / O(n) 앞에서 pop">
+      banned = load_banned()               # list
+      ok = [u for u in users if u.id not in banned]   # 매번 선형 탐색
+
+      queue = [start]
+      while queue:
+          node = queue.pop(0)              # O(n) 이동
+          queue.extend(neighbors(node))
+      </py>
+      <py good>
+      banned = set(load_banned())          # O(1) 평균
+      ok = [u for u in users if u.id not in banned]
+
+      from collections import deque
+      queue = deque([start])
+      while queue:
+          node = queue.popleft()           # O(1)
+          queue.extend(neighbors(node))
+      </py>
+    </div>
+    <div>
+      <div class="tablewrap"><table>
+        <tr><th>연산</th><th>list</th><th>set/dict</th><th>deque</th></tr>
+        <tr><td><code>x in c</code></td><td>O(n)</td><td>O(1)</td><td>O(n)</td></tr>
+        <tr><td>끝 추가/삭제</td><td>O(1)*</td><td>O(1)</td><td>O(1)</td></tr>
+        <tr><td>앞 추가/삭제</td><td>O(n)</td><td>—</td><td>O(1)</td></tr>
+        <tr><td>인덱스 접근</td><td>O(1)</td><td>—</td><td>O(n)</td></tr>
+        <tr><td>정렬</td><td>O(n log n)</td><td>—</td><td>—</td></tr>
+      </table></div>
+      <p class="small">* amortized. 최소/최대를 반복적으로 꺼내면 <code>heapq</code>(O(log n)), 정렬 상태 유지 삽입은 <code>bisect.insort</code>.</p>
+      <div class="box tip"><b>카운팅/그룹핑</b> <code>collections.Counter(words).most_common(3)</code>, <code>defaultdict(list)</code>로 if-키-존재-검사 보일러플레이트 제거.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑭ assert로 검증 ⑮ 하드코딩 ⑯ print 디버깅</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      def withdraw(account, amount):
+          assert amount > 0, "amount must be positive"   # python -O 에서 사라짐
+          assert account.owner == current_user()          # 권한 검사를 assert 로?!
+          ...
+
+      API_KEY = "sk-live-8f2a..."                         # 비밀 키 커밋
+      DB = "/Users/jay/dev/app.db"                        # 개인 경로
+      print("DEBUG >>>", payload)                         # 운영 로그 오염 + 민감정보
+      if retries > 3: ...                                 # 매직 넘버
+      </py>
+    </div>
+    <div>
+      <py good>
+      def withdraw(account: Account, amount: Decimal) -> None:
+          if amount <= 0:
+              raise ValueError(f"amount must be positive, got {amount}")
+          if account.owner_id != current_user().id:
+              raise PermissionError("not the account owner")
+
+      API_KEY = os.environ["PAYMENT_API_KEY"]    # 또는 시크릿 매니저
+      MAX_RETRIES = 3
+      log.debug("payload received: id=%s", payload.id)
+      </py>
+      <div class="box"><b>assert의 올바른 용도</b> 내부 불변식(invariant) 문서화와 테스트. "이 지점에서 절대 일어날 수 없는 상태"를 표현할 때만. 외부 입력, 권한, 비즈니스 규칙에는 예외를 사용.</div>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="5. 흔한 실수 (Junior)">
+  <h2>⑰ import 부수효과/순환 ⑱ type() 비교 ⑲ 재귀 깊이 ⑳ 정렬 안정성 오해</h2>
+  <div class="cols">
+    <div>
+      <py bad>
+      # config.py
+      conn = psycopg.connect(os.environ["DB_URL"])   # import 만 해도 DB 연결
+      main()                                          # 가드 없음
+
+      # a.py: from b import f   /  b.py: from a import g   → ImportError (순환)
+
+      if type(x) == dict: ...                        # 서브클래스 거부
+      </py>
+      <py good>
+      def get_connection() -> Connection: ...        # 지연 생성
+
+      if __name__ == "__main__":
+          main()
+
+      if isinstance(x, Mapping): ...                 # 추상 타입으로 검사
+      </py>
+      <p class="small">순환 import는 대개 모듈 경계가 잘못된 신호 → 공통 부분을 제3 모듈로 추출. 임시방편: 함수 내부 지역 import, 타입 전용이면 <code>if TYPE_CHECKING:</code>.</p>
+    </div>
+    <div>
+      <py bad cap="❌ 깊은 재귀">
+      def depth(node):
+          return 0 if node is None else 1 + depth(node.next)
+      # 노드 1000개 이상 연결 리스트 → RecursionError
+      # (기본 한도 sys.getrecursionlimit() == 1000)
+      </py>
+      <py good>
+      def depth(node):
+          n = 0
+          while node is not None:
+              n, node = n + 1, node.next
+          return n
+      </py>
+      <div class="box">Python에는 <b>꼬리 재귀 최적화가 없습니다</b>. 입력 크기가 제한되지 않은 재귀는 반복문이나 명시적 스택으로. <code>setrecursionlimit</code>을 올리는 건 C 스택 오버플로(세그폴트) 위험.</div>
+      <div class="box tip"><b>정렬</b> <code>sorted</code>/<code>list.sort</code>는 안정 정렬(Timsort/3.11+ Powersort 병합 정책) → 다중 키 정렬은 튜플 키 하나로, 또는 보조 키부터 여러 번 정렬.</div>
+    </div>
+  </div>
+</section>

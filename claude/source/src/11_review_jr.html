@@ -1,0 +1,263 @@
+<section class="slide divider" data-part="11. 실전 문제 B · 코드 리뷰">
+  <div class="small">PART 10 · B</div>
+  <h1>코드 리뷰 실전 문제</h1>
+  <p class="lead">각 문제는 "PR로 올라온 코드"라고 가정합니다. 다음 순서로 답해 보세요.</p>
+  <ol class="lead">
+    <li>이 코드의 의도를 한 문장으로 요약</li>
+    <li>이슈를 <b>[Blocking] / [Suggestion] / [Nit]</b>로 분류해 줄 번호와 함께 나열</li>
+    <li>가장 중요한 이슈 1~2개에 대해 리뷰 코멘트를 실제 문장으로 작성</li>
+    <li>개선된 코드 제시</li>
+  </ol>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv jr">Junior</span> 문제 1 — 성적 처리</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="grades.py — 학생별 평균을 계산해 합격 여부를 반환">
+      def average_scores(students, passing=60, result={}):
+          for i in range(len(students)):
+              s = students[i]
+              total = 0
+              for score in s['scores']:
+                  total = total + score
+              avg = total / len(s['scores'])
+              if avg >= passing:
+                  result[s['name']] = 'PASS'
+              else:
+                  result[s['name']] = 'FAIL'
+          return result
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L1</b> 가변 기본 인자 <code>result={}</code>: 호출 간 결과가 누적됨. 두 번째 반 성적을 처리하면 첫 번째 반 학생까지 섞여 반환.</li>
+          <li><b>[Blocking] L7</b> <code>scores</code>가 빈 리스트면 <code>ZeroDivisionError</code>. 정책(제외? FAIL? 에러?) 결정 필요.</li>
+          <li><b>[Suggestion] L9</b> 이름이 키 → 동명이인이면 덮어씀. 학생 ID를 키로.</li>
+          <li><b>[Suggestion]</b> <code>'PASS'</code>/<code>'FAIL'</code> 매직 문자열 → <code>bool</code> 또는 <code>Enum</code>.</li>
+          <li><b>[Nit] L2-6</b> <code>range(len())</code>, 수동 합계 → <code>for s in students</code>, <code>sum()</code>, <code>statistics.fmean</code>.</li>
+          <li><b>[Nit]</b> 타입 힌트, docstring 부재. dict 대신 dataclass 고려.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      from collections.abc import Iterable
+      from dataclasses import dataclass
+      from statistics import fmean
+
+      @dataclass(frozen=True)
+      class Student:
+          id: int
+          name: str
+          scores: tuple[float, ...]
+
+      def pass_status(students: Iterable[Student], passing: float = 60) -> dict[int, bool]:
+          """Return {student_id: passed}. Students without scores are treated as failed."""
+          return {
+              s.id: bool(s.scores) and fmean(s.scores) >= passing
+              for s in students
+          }
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv jr">Junior</span> 문제 2 — 설정 파일 읽기</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="config.py — key=value 형식 설정 파일 파싱">
+      import os
+
+      def read_config(path):
+          if os.path.exists(path):
+              f = open(path)
+              lines = f.readlines()
+              config = {}
+              for line in lines:
+                  if line.startswith('#') or line == '\n':
+                      continue
+                  key, value = line.split('=')
+                  config[key] = value
+              return config
+          else:
+              print("config not found")
+      </py>
+      <py lang="text" cap="입력 예 (config.txt)">
+      # db settings
+      host = localhost
+      url=postgres://u:p@h/db?sslmode=require
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L11</b> 값에 <code>=</code>가 있으면(<code>url=...?sslmode=require</code>) <code>ValueError: too many values to unpack</code>. <code>partition('=')</code> 또는 <code>split('=', 1)</code>. <code>=</code> 없는 줄도 에러.</li>
+          <li><b>[Blocking] L12</b> 공백·개행 미제거: 키가 <code>'host '</code>, 값이 <code>' localhost\n'</code>. 마지막 줄 개행 유무에 따라 결과가 달라짐.</li>
+          <li><b>[Blocking] L5</b> 파일을 닫지 않음, 인코딩 미지정 → <code>with open(..., encoding="utf-8")</code>.</li>
+          <li><b>[Suggestion] L4/L15</b> 파일 없음 시 <code>print</code> 후 암묵적 <code>None</code> 반환 → 호출자가 <code>config['host']</code>에서 <code>TypeError</code>. 예외를 전파하거나 명시적 기본값. <code>exists</code> 검사는 TOCTOU.</li>
+          <li><b>[Suggestion] L9</b> 공백만 있는 줄, 들여쓴 주석(<code>  # x</code>), Windows 개행(<code>\r\n</code>) 미처리.</li>
+          <li><b>[Suggestion]</b> 바퀴 재발명: TOML(<code>tomllib</code>), <code>configparser</code>, 환경변수 사용 검토.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      from pathlib import Path
+
+      class ConfigError(ValueError):
+          pass
+
+      def read_config(path: Path) -> dict[str, str]:
+          config: dict[str, str] = {}
+          with path.open(encoding="utf-8") as f:     # FileNotFoundError 는 전파
+              for lineno, raw in enumerate(f, start=1):
+                  line = raw.strip()
+                  if not line or line.startswith("#"):
+                      continue
+                  key, sep, value = line.partition("=")
+                  if not sep or not key.strip():
+                      raise ConfigError(f"{path}:{lineno}: expected key=value")
+                  config[key.strip()] = value.strip()
+          return config
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv jr">Junior</span> 문제 3 — 사용자 정리</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="users.py — 비활성 사용자와 중복 이메일 제거">
+      def clean_users(users):
+          seen = []
+          for u in users:
+              if u['active'] == False:
+                  users.remove(u)
+              elif u['email'] in seen:
+                  users.remove(u)
+              else:
+                  seen.append(u['email'])
+          return users
+      </py>
+      <py cap="테스트 입력">
+      users = [
+          {"email": "a@x.com", "active": False},
+          {"email": "b@x.com", "active": False},
+          {"email": "A@x.com", "active": True},
+          {"email": "a@x.com", "active": True},
+      ]
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L3-7</b> 순회 중 리스트에서 <code>remove</code> → 다음 원소를 건너뜀. 위 입력에서 <code>b@x.com</code>(비활성)이 검사되지 않고 남습니다.</li>
+          <li><b>[Blocking]</b> 입력 리스트를 <b>제자리 변경</b>하면서 반환까지 함 → 호출자의 원본 데이터가 몰래 바뀜. 새 리스트 반환이 안전.</li>
+          <li><b>[Blocking]</b> <code>remove(u)</code>는 <code>==</code>로 첫 번째 일치 원소를 지움 → 같은 내용의 dict가 앞에 있으면 엉뚱한 원소 삭제.</li>
+          <li><b>[Suggestion] L6</b> <code>seen</code>이 리스트 → O(n²). <code>set</code> 사용.</li>
+          <li><b>[Suggestion]</b> 이메일 대소문자/공백 정규화 누락 (<code>A@x.com</code> vs <code>a@x.com</code>) — 도메인 정책 확인 질문.</li>
+          <li><b>[Nit] L4</b> <code>== False</code> → <code>if not u['active']</code>.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      def clean_users(users: Iterable[dict]) -> list[dict]:
+          """Return active users, keeping the first occurrence of each email."""
+          seen: set[str] = set()
+          result: list[dict] = []
+          for u in users:
+              if not u["active"]:
+                  continue
+              key = u["email"].strip().casefold()
+              if key in seen:
+                  continue
+              seen.add(key)
+              result.append(u)
+          return result
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>
+
+<section class="slide" data-part="11. 실전 문제 B · 코드 리뷰">
+  <h2><span class="lv jr">Junior</span> 문제 4 — 장바구니</h2>
+  <div class="cols">
+    <div>
+      <py ln cap="cart.py">
+      class ShoppingCart:
+          items = []
+          discount = 0
+
+          def add(self, name, price, qty=1):
+              self.items.append({'name': name, 'price': price, 'qty': qty})
+
+          def total(self):
+              total = 0
+              for item in self.items:
+                  total += item['price'] * item['qty']
+              return total - total * self.discount / 100
+
+          def apply_coupon(self, code):
+              if code == 'SALE10':
+                  self.discount = 10
+              if code == 'SALE20':
+                  self.discount = 20
+              else:
+                  self.discount = 0
+      </py>
+    </div>
+    <div>
+      <details><summary>찾아야 할 이슈</summary><div>
+        <ul>
+          <li><b>[Blocking] L2</b> <code>items</code>가 클래스 변수 → <b>모든 사용자의 장바구니가 공유</b>됨 (웹 서버에서 개인정보·결제 사고).</li>
+          <li><b>[Blocking] L15-20</b> <code>if/if/else</code>: <code>SALE10</code>을 적용하면 두 번째 <code>if</code>가 거짓이라 <code>else</code>로 가서 할인이 0으로 초기화. <code>elif</code> 필요.</li>
+          <li><b>[Blocking] L12</b> 금액에 float 연산 → <code>Decimal</code>/정수 센트, 반올림 정책 명시.</li>
+          <li><b>[Suggestion] L5</b> <code>price</code>, <code>qty</code> 검증 없음 (음수 수량으로 총액 조작 가능).</li>
+          <li><b>[Suggestion]</b> 잘못된 쿠폰 코드가 조용히 기존 할인을 지움 → 예외 또는 결과 반환. 쿠폰 표는 상수 매핑으로.</li>
+          <li><b>[Nit]</b> dict 대신 <code>LineItem</code> dataclass, 타입 힌트.</li>
+        </ul>
+      </div></details>
+      <details><summary>개선 코드</summary><div>
+      <py good>
+      from dataclasses import dataclass, field
+      from decimal import Decimal, ROUND_HALF_UP
+
+      COUPONS: dict[str, Decimal] = {"SALE10": Decimal("10"), "SALE20": Decimal("20")}
+
+      @dataclass(frozen=True)
+      class LineItem:
+          name: str
+          unit_price: Decimal
+          qty: int = 1
+          def __post_init__(self) -> None:
+              if self.unit_price < 0 or self.qty <= 0:
+                  raise ValueError(f"invalid line item: {self}")
+
+      @dataclass
+      class ShoppingCart:
+          items: list[LineItem] = field(default_factory=list)
+          discount_pct: Decimal = Decimal("0")
+
+          def add(self, item: LineItem) -> None:
+              self.items.append(item)
+
+          def apply_coupon(self, code: str) -> None:
+              try:
+                  self.discount_pct = COUPONS[code]
+              except KeyError:
+                  raise ValueError(f"unknown coupon: {code!r}") from None
+
+          def total(self) -> Decimal:
+              subtotal = sum((i.unit_price * i.qty for i in self.items), Decimal("0"))
+              total = subtotal * (100 - self.discount_pct) / 100
+              return total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+      </py>
+      </div></details>
+    </div>
+  </div>
+</section>
