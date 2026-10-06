@@ -1,0 +1,4822 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python 코드 리뷰 인터뷰 마스터 슬라이드 데크 (Junior → Intermediate → Expert)</title>
+  <style>
+/* ==========================================================================
+   1. CSS Custom Properties & Reset
+   ========================================================================== */
+:root {
+  /* Core Theme Colors (Default: Dark Theme) */
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-hover: #1f242c;
+  --text: #c9d1d9;
+  --text-heading: #f0f6fc;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --accent-bg: rgba(88, 166, 255, 0.12);
+  --bad: #f85149;
+  --bad-bg: rgba(248, 81, 73, 0.15);
+  --bad-border: #da3633;
+  --good: #3fb950;
+  --good-bg: rgba(63, 185, 80, 0.15);
+  --good-border: #238636;
+  --warn: #d29922;
+  --warn-bg: rgba(210, 153, 34, 0.15);
+  --border: #30363d;
+  --border-light: #21262d;
+
+  /* Code Syntax Tokens & Highlighting */
+  --code-bg: #0b0f14;
+  --code-border: #30363d;
+  --tok-keyword: #ff7b72;
+  --tok-string: #a5d6ff;
+  --tok-comment: #8b949e;
+  --tok-builtin: #79c0ff;
+  --tok-number: #79c0ff;
+  --tok-decorator: #d2a8ff;
+  --tok-dunder: #ffa657;
+  
+  /* Diff Highlighting */
+  --diff-del-bg: rgba(248, 81, 73, 0.22);
+  --diff-del-text: #ffdcd7;
+  --diff-add-bg: rgba(63, 185, 80, 0.22);
+  --diff-add-text: #aff5b4;
+
+  /* Typography & Layout Spacing */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --header-height: 54px;
+  --footer-height: 48px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] {
+  /* Light Theme Contrast Palette */
+  --bg: #f6f8fa;
+  --panel: #ffffff;
+  --panel-hover: #f3f4f6;
+  --text: #24292f;
+  --text-heading: #1f2328;
+  --text-muted: #57606a;
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --accent-bg: rgba(9, 105, 218, 0.08);
+  --bad: #cf222e;
+  --bad-bg: rgba(207, 34, 46, 0.08);
+  --bad-border: #ff8182;
+  --good: #1a7f37;
+  --good-bg: rgba(26, 127, 55, 0.08);
+  --good-border: #4ac26b;
+  --warn: #9a6700;
+  --warn-bg: rgba(154, 103, 0, 0.08);
+  --border: #d0d7de;
+  --border-light: #e1e4e8;
+
+  /* Code Syntax Tokens in Light Mode */
+  --code-bg: #f6f8fa;
+  --code-border: #d0d7de;
+  --tok-keyword: #cf222e;
+  --tok-string: #0a3069;
+  --tok-comment: #6e7781;
+  --tok-builtin: #953800;
+  --tok-number: #0550ae;
+  --tok-decorator: #8250df;
+  --tok-dunder: #b35900;
+
+  /* Diff Highlighting in Light Mode */
+  --diff-del-bg: #ffebe9;
+  --diff-del-text: #cf222e;
+  --diff-add-bg: #dafbe1;
+  --diff-add-text: #1a7f37;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ==========================================================================
+   2. Topbar & Header Navigation
+   ========================================================================== */
+#topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+  user-select: none;
+}
+
+.deck-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.main-title {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.sub-title {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-left: 1px solid var(--border);
+  padding-left: 0.75rem;
+}
+
+.top-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+button:hover {
+  background: var(--panel-hover);
+  border-color: var(--accent);
+  color: var(--text-heading);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+#quick-search {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  width: 140px;
+  outline: none;
+  transition: var(--transition);
+}
+
+#quick-search:focus {
+  width: 200px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+#level-filter {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   3. Progress Bar
+   ========================================================================== */
+#progress-container {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--border-light);
+  z-index: 101;
+}
+
+#progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), #a371f7);
+  transition: width 0.25s ease-out;
+}
+
+/* ==========================================================================
+   4. Stage & Slide Presentation Container
+   ========================================================================== */
+#stage {
+  position: absolute;
+  top: calc(var(--header-height) + 3px);
+  bottom: var(--footer-height);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg);
+}
+
+#deck {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 2rem 3rem;
+  overflow-y: auto;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(30px);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+  display: flex;
+  flex-direction: column;
+}
+
+.slide.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  z-index: 2;
+}
+
+.slide-content-wrapper {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Slide Header & Metadata */
+.slide-header {
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.slide-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.slide-category {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+.slide-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.25;
+}
+
+/* Level Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-jr { background: var(--good-bg); color: var(--good); border: 1px solid var(--good-border); }
+.badge-mid { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); }
+.badge-sr { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad-border); }
+.badge-core { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); }
+
+/* Typography inside Slides */
+.slide h3 {
+  color: var(--text-heading);
+  font-size: 1.25rem;
+  margin: 1rem 0 0.5rem 0;
+}
+
+.slide p, .slide li {
+  color: var(--text);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.slide ul, .slide ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.lead-text {
+  font-size: 1.15rem;
+  color: var(--text-heading);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   5. Matrix & Rubric Tables
+   ========================================================================== */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+}
+
+table.rubric-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  text-align: left;
+}
+
+table.rubric-table th, table.rubric-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+table.rubric-table th {
+  background: var(--panel-hover);
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+table.rubric-table tr:last-child td {
+  border-bottom: none;
+}
+
+table.rubric-table tr:hover td {
+  background: var(--panel-hover);
+}
+
+/* ==========================================================================
+   6. Code Block & Syntax Highlighting
+   ========================================================================== */
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+  position: relative;
+}
+
+code {
+  font-family: var(--font-mono);
+}
+
+p code, li code {
+  background: var(--panel-hover);
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.35rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--accent);
+}
+
+/* Syntax Token Colors */
+.tok-keyword   { color: var(--tok-keyword); font-weight: 600; }
+.tok-string    { color: var(--tok-string); }
+.tok-comment   { color: var(--tok-comment); font-style: italic; }
+.tok-builtin   { color: var(--tok-builtin); }
+.tok-number    { color: var(--tok-number); }
+.tok-decorator { color: var(--tok-decorator); font-weight: 600; }
+.tok-dunder    { color: var(--tok-dunder); font-weight: 600; }
+
+/* Line Diff Highlighting */
+.diff-line {
+  display: block;
+  width: 100%;
+  padding: 0 0.35rem;
+  margin: 0 -0.35rem;
+}
+
+.diff-del {
+  background: var(--diff-del-bg);
+  color: var(--diff-del-text);
+  text-decoration: none;
+}
+
+.diff-add {
+  background: var(--diff-add-bg);
+  color: var(--diff-add-text);
+}
+
+/* Copy Button on Code */
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel-hover);
+  border: 1px solid var(--code-border);
+  border-bottom: none;
+  border-top-left-radius: var(--radius-md);
+  border-top-right-radius: var(--radius-md);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.code-header + pre {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.btn-copy-code {
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+}
+
+/* ==========================================================================
+   7. Before / After Comparative Views (Split & Tabs)
+   ========================================================================== */
+.code-compare, .compare-container {
+  display: flex;
+  flex-direction: column;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.compare-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel-hover);
+  border-bottom: 1px solid var(--border);
+  padding: 0.35rem 0.75rem;
+}
+
+.tab-btn-group {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.compare-tab, .tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+}
+
+.compare-tab.active, .tab-btn.active {
+  background: var(--panel);
+  border-color: var(--border);
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.compare-panes {
+  display: grid;
+  gap: 1px;
+  background: var(--border);
+}
+
+/* Split View Mode (Default for side-by-side) */
+.code-compare[data-mode="split"] .compare-panes {
+  grid-template-columns: 1fr 1fr;
+}
+
+.code-compare[data-mode="split"] .pane-diff {
+  display: none !important;
+}
+
+/* Tab Modes */
+.code-compare[data-mode="before"] .compare-panes {
+  grid-template-columns: 1fr;
+}
+.code-compare[data-mode="before"] .pane-after,
+.code-compare[data-mode="before"] .pane-diff {
+  display: none !important;
+}
+
+.code-compare[data-mode="after"] .compare-panes {
+  grid-template-columns: 1fr;
+}
+.code-compare[data-mode="after"] .pane-before,
+.code-compare[data-mode="after"] .pane-diff {
+  display: none !important;
+}
+
+.code-compare[data-mode="diff"] .compare-panes {
+  grid-template-columns: 1fr;
+}
+.code-compare[data-mode="diff"] .pane-before,
+.code-compare[data-mode="diff"] .pane-after {
+  display: none !important;
+}
+
+.compare-pane {
+  background: var(--panel);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.compare-pane h4 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pane-before h4, .pane-bad h4 { color: var(--bad); }
+.pane-after h4, .pane-good h4  { color: var(--good); }
+.pane-diff h4                  { color: var(--accent); }
+
+.compare-pane pre {
+  flex: 1;
+  margin: 0;
+}
+
+/* Callout Box for Mechanism & Advice */
+.info-box {
+  background: var(--panel);
+  border-left: 4px solid var(--accent);
+  padding: 0.85rem 1.25rem;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin: 0.75rem 0;
+}
+
+.info-box h4 {
+  color: var(--accent);
+  margin-bottom: 0.35rem;
+  font-size: 0.95rem;
+}
+
+.info-box.danger {
+  border-left-color: var(--bad);
+}
+.info-box.danger h4 { color: var(--bad); }
+
+.info-box.success {
+  border-left-color: var(--good);
+}
+.info-box.success h4 { color: var(--good); }
+
+/* ==========================================================================
+   8. Multi-Stage Collapsible Scenarios (F36)
+   ========================================================================== */
+.scenario-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.scenario-context {
+  background: var(--panel-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.scenario-context h4 {
+  color: var(--accent);
+  font-size: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+details {
+  background: var(--panel-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+details[open] {
+  border-color: var(--accent);
+  background: var(--panel);
+}
+
+summary {
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-heading);
+  transition: var(--transition);
+}
+
+summary:hover {
+  background: var(--panel-hover);
+  color: var(--accent);
+}
+
+details.checkpoints summary { border-left: 4px solid var(--warn); }
+details.feedback summary    { border-left: 4px solid var(--accent); }
+details.refactored summary  { border-left: 4px solid var(--good); }
+
+.details-body {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+}
+
+.checkpoint-list {
+  list-style: none;
+  padding: 0;
+}
+
+.checkpoint-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.92rem;
+}
+
+.p-tag {
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.p0 { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad-border); }
+.p1 { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn); }
+.p2 { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent); }
+.p3 { background: var(--border-light); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* Model Feedback Quote Block */
+.feedback-quote {
+  background: var(--bg);
+  border-left: 3px solid var(--accent);
+  padding: 1rem;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   9. Overview Grid Mode (Modal)
+   ========================================================================== */
+#overview-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 17, 23, 0.88);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s;
+}
+
+[data-theme="light"] #overview-grid {
+  background: rgba(246, 248, 250, 0.92);
+}
+
+#overview-grid.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.grid-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.grid-header h2 {
+  font-size: 1.5rem;
+  color: var(--text-heading);
+}
+
+.grid-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+  flex: 1;
+}
+
+.grid-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+  transition: var(--transition);
+  position: relative;
+}
+
+.grid-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+
+.grid-card.current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.grid-card-num {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.grid-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0.5rem 0;
+  line-height: 1.35;
+}
+
+.grid-card-tag {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   10. TOC Drawer & Modals
+   ========================================================================== */
+#toc-drawer {
+  position: fixed;
+  top: var(--header-height);
+  bottom: var(--footer-height);
+  left: 0;
+  width: 320px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  z-index: 150;
+  box-shadow: var(--shadow-lg);
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+#toc-drawer.open {
+  transform: translateX(0);
+}
+
+.toc-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toc-scroll-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 0;
+}
+
+.toc-item {
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+  border-left: 3px solid transparent;
+  transition: var(--transition);
+}
+
+.toc-item:hover {
+  background: var(--panel-hover);
+  color: var(--text-heading);
+}
+
+.toc-item.current {
+  background: var(--accent-bg);
+  border-left-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   11. Bottombar & Footer Navigation
+   ========================================================================== */
+#bottombar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--footer-height);
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  z-index: 100;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+  user-select: none;
+}
+
+#slide-counter {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 70px;
+  text-align: center;
+}
+
+.shortcut-legend {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+kbd {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* ==========================================================================
+   12. Toast Notifications
+   ========================================================================== */
+#toast {
+  position: fixed;
+  bottom: calc(var(--footer-height) + 1rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel);
+  border: 1px solid var(--accent);
+  color: var(--text-heading);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: 0.88rem;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ==========================================================================
+   13. Responsive Media Queries & Print Styles
+   ========================================================================== */
+@media (max-width: 900px) {
+  .sub-title, .shortcut-legend {
+    display: none;
+  }
+  .slide {
+    padding: 1.5rem 1rem;
+  }
+  .code-compare[data-mode="split"] .compare-panes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  #topbar, #bottombar, #progress-container, #overview-grid, #toc-drawer {
+    display: none !important;
+  }
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  #stage, #deck {
+    position: static !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .slide {
+    position: static !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    page-break-after: always;
+    padding: 2cm !important;
+    height: auto !important;
+  }
+  details {
+    display: block !important;
+  }
+  details > *:not(summary) {
+    display: block !important;
+  }
+}
+  </style>
+</head>
+<body class="mode-slide">
+  <!-- Top Control Bar -->
+  <header id="topbar">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <button id="btn-toc" title="목차 서랍 열기/닫기 (T)" aria-label="목차">☰ 목차</button>
+      <button id="btn-grid" title="개요 그리드 모달 (G)" aria-label="개요 그리드">⊞ 개요</button>
+      <div class="deck-title">
+        <span class="main-title">Python Code Review Interview</span>
+        <span class="sub-title" id="current-chapter-label">Junior → Intermediate → Expert</span>
+      </div>
+    </div>
+    <div class="top-controls">
+      <input type="search" id="quick-search" placeholder="검색 (/)..." aria-label="슬라이드 검색">
+      <select id="level-filter" aria-label="레벨 필터">
+        <option value="ALL">모든 레벨</option>
+        <option value="JR">Junior</option>
+        <option value="MID">Intermediate</option>
+        <option value="SR">Expert</option>
+      </select>
+      <button id="btn-compare-mode" title="비교 모드 전환 (C)">⇋ 비교 전환</button>
+      <button id="btn-theme" title="테마 전환 (D)">◐</button>
+      <button id="btn-fullscreen" title="전체화면 (F)">⛶</button>
+    </div>
+  </header>
+
+  <!-- Progress Bar -->
+  <div id="progress-container"><div id="progress-bar"></div></div>
+
+  <!-- TOC Sidebar Drawer -->
+  <nav id="toc-drawer" aria-label="목차 네비게이션">
+    <div class="toc-header">
+      <h3 style="margin: 0; font-size: 1.1rem; color: var(--text-heading);">슬라이드 목차</h3>
+      <span id="toc-count" style="font-size: 0.8rem; color: var(--text-muted);">총 38개</span>
+    </div>
+    <div class="toc-scroll-list" id="toc-list"></div>
+  </nav>
+
+  <!-- Main Presentation Stage -->
+  <main id="stage" role="region" aria-label="슬라이드 무대">
+    <div id="deck">
+
+    <!-- Slide 1: Python 코드 리뷰 인터뷰 마스터 데크 -->
+    <section class="slide active" id="slide-1" data-title="Python 코드 리뷰 인터뷰 마스터 데크" data-category="Intro" data-level="all">
+      <div class="slide-content-wrapper" style="justify-content: center; align-items: center; text-align: center;">
+              <div style="margin-bottom: 1.5rem;">
+                <span class="badge badge-core">STANDALONE MASTER DECK</span>
+                <span class="badge badge-jr">JUNIOR</span>
+                <span class="badge badge-mid">INTERMEDIATE</span>
+                <span class="badge badge-sr">EXPERT</span>
+              </div>
+              <h1 style="font-size: 2.8rem; font-weight: 800; color: var(--text-heading); margin-bottom: 1rem; line-height: 1.2;">
+                Python Code Review Interview
+              </h1>
+              <p class="lead-text" style="max-width: 780px; margin: 0 auto 2rem auto; font-size: 1.25rem;">
+                주니어부터 시니어/엑스퍼트까지: 계층별 평가 루브릭, PEP 8 스타일 가이드, 12대 핵심 안티패턴, 
+                최신 모던 파이썬(3.10~3.12+), 그리고 실전 프로덕션 모의 PR 리뷰 9선 완벽 대비
+              </p>
+              <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
+                <button onclick="Deck.next()" style="padding: 0.6rem 1.4rem; font-size: 1rem; background: var(--accent); color: #ffffff; border: none; font-weight: 600;">
+                  시작하기 (Space / →)
+                </button>
+                <button onclick="Deck.toggleOverviewGrid()" style="padding: 0.6rem 1.4rem; font-size: 1rem;">
+                  전체 개요 (G)
+                </button>
+              </div>
+              <div style="margin-top: 3rem; color: var(--text-muted); font-size: 0.85rem;">
+                Zero External CDN · 100% Standalone Offline <code>file://</code> Execution · Real-time Syntax & Diff Engine
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 2: 슬라이드 구성 및 단축키 안내 -->
+    <section class="slide" id="slide-2" data-title="슬라이드 구성 및 단축키 안내" data-category="Navigation" data-level="all">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Navigation Guide</span>
+                    <span class="badge badge-core">GUIDE</span>
+                  </div>
+                  <h2 class="slide-title">데크 구성 및 인터랙티브 탐색 가이드</h2>
+                </div>
+              </div>
+              <p class="lead-text">
+                본 프레젠테이션 데크는 키보드 단축키, 검색, 다크/라이트 테마, 코드 분할 비교 및 
+                개요 그리드를 완벽히 지원하는 독립 실행형 웹 애플리케이션입니다.
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+                <div class="info-box">
+                  <h4>⌨️ 키보드 네비게이션 단축키</h4>
+                  <ul style="margin-top: 0.5rem;">
+                    <li><kbd>→</kbd> / <kbd>Space</kbd> / <kbd>PageDown</kbd> : 다음 슬라이드로 이동</li>
+                    <li><kbd>←</kbd> / <kbd>PageUp</kbd> : 이전 슬라이드로 이동</li>
+                    <li><kbd>Home</kbd> / <kbd>End</kbd> : 처음 / 마지막 슬라이드로 즉시 점프</li>
+                    <li><kbd>G</kbd> : 전체 슬라이드 개요 그리드 모달 열기/닫기</li>
+                    <li><kbd>T</kbd> : 슬라이드 목차(TOC) 서랍 열기/닫기</li>
+                    <li><kbd>D</kbd> : 다크 테마 / 라이트 테마 전환</li>
+                    <li><kbd>C</kbd> : Before / After 비교 모드 전환 (Split / Tabs / Diff)</li>
+                    <li><kbd>F</kbd> : 브라우저 전체화면 모드 토글</li>
+                    <li><kbd>/</kbd> : 상단 검색창 포커스</li>
+                    <li><kbd>Esc</kbd> : 모든 오버레이 모달 및 검색창 닫기</li>
+                  </ul>
+                </div>
+                <div class="info-box success">
+                  <h4>📚 데크 전체 5대 챕터 구성</h4>
+                  <ol style="margin-top: 0.5rem;">
+                    <li><strong>Chapter 1. 코드 리뷰 철학 및 레벨별 루브릭</strong>: Junior, Intermediate, Expert 5대 평가 축</li>
+                    <li><strong>Chapter 2. 12대 핵심 안티패턴 (The Dirty Dozen)</strong>: CPython 메커니즘 분석 및 Before vs After</li>
+                    <li><strong>Chapter 3. 모던 파이썬 3.10~3.12+ 핵심</strong>: Pattern Matching, TaskGroup, ExceptionGroup, Metaprogramming</li>
+                    <li><strong>Chapter 4. 실전 코드 리뷰 모의 인터뷰 9선</strong>: 주니어 3문항, 인터미디엇 3문항, 엑스퍼트 3문항</li>
+                    <li><strong>Chapter 5. 리뷰어 에티켓 &amp; 치트시트</strong>: P0~P3 이슈 트리아지 및 커뮤니케이션 공식</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 3: 코드 리뷰 인터뷰의 본질과 5대 평가 축 -->
+    <section class="slide" id="slide-3" data-title="코드 리뷰 인터뷰의 본질과 5대 평가 축" data-category="Philosophy" data-level="all">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Core Philosophy</span>
+                    <span class="badge badge-core">FRAMEWORK</span>
+                  </div>
+                  <h2 class="slide-title">코드 리뷰 인터뷰의 본질과 5대 평가 차원</h2>
+                </div>
+              </div>
+              <p class="lead-text">
+                코드 리뷰 인터뷰는 단순한 "오타나 들여쓰기 위반 찾기 퀴즈"가 아닙니다. 
+                면접관은 지원자가 실제 팀의 프로덕션 장애를 사전에 방어하고, 기술적 가드레일을 제시할 수 있는지를 평가합니다.
+              </p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div class="info-box">
+                  <h4>1. 결함 발견 및 경계 조건</h4>
+                  <p>None, 빈 컬렉션, 0 나누기, 경계값 오프바이원(Off-by-one) 등 코드가 프로덕션에서 깨질 수 있는 실패 경로를 능동적으로 추론하는 역량.</p>
+                </div>
+                <div class="info-box">
+                  <h4>2. 파이썬 언어 메커니즘</h4>
+                  <p>가변성, 바인딩 시점, 참조 카운팅, GIL, Dunder 프로토콜, MRO, CPython 메모리 모델에 대한 심층적 이해도.</p>
+                </div>
+                <div class="info-box">
+                  <h4>3. 설계 감각 및 테스트 용이성</h4>
+                  <p>단일 책임 원칙(SRP), I/O와 순수 계산 분리, 의존성 주입을 통해 결정론적 단위 테스트가 가능한 코드로 리팩토링 유도.</p>
+                </div>
+                <div class="info-box">
+                  <h4>4. 시스템 관점 및 보안·복원력</h4>
+                  <p>리소스 누수(FD/메모리), 인젝션 공격 방어, 동시성 경쟁 조건, 타임아웃, 멱등성 및 장애 격리 고려.</p>
+                </div>
+                <div class="info-box">
+                  <h4>5. 엔지니어링 커뮤니케이션</h4>
+                  <p>비난이 아닌 협력적 어조, [관찰 → 위험 영향 → 구체적 대안] 피드백 구조화, [P0~P3] 우선순위 명확화.</p>
+                </div>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 4: Junior 레벨 코드 리뷰 루브릭 및 평가 기준 -->
+    <section class="slide" id="slide-4" data-title="Junior 레벨 코드 리뷰 루브릭 및 평가 기준" data-category="Level Rubric" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Level Rubrics</span>
+                    <span class="badge badge-jr">JUNIOR (주니어)</span>
+                  </div>
+                  <h2 class="slide-title">Junior 코드 리뷰 평가 기준 및 상세 루브릭</h2>
+                </div>
+              </div>
+              <p class="lead-text">
+                주니어 단계에서는 기본 문법의 정확한 이해, 직관적인 결함 식별, PEP 8 스타일 가이드 준수, 
+                가독성과 변수 네이밍 규칙, 기본적인 예외 처리, 그리고 표준 라이브러리(stdlib)의 올바른 활용을 중점 평가합니다.
+              </p>
+              <div class="table-wrapper">
+                <table class="rubric-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 18%;">평가 차원</th>
+                      <th style="width: 25%;">미흡 (Unsatisfactory)</th>
+                      <th style="width: 28%;">우수 (Proficient)</th>
+                      <th style="width: 29%;">탁월 (Exemplary)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>1. 결함 발견 및 경계값</strong></td>
+                      <td>명백한 문법 에러나 오타만 겨우 찾으며 경계 조건을 놓침</td>
+                      <td>빈 컬렉션, <code>None</code> 입력, 0 나누기 크래시 지점을 자발적으로 식별</td>
+                      <td>실패를 유발하는 구체적인 반례 입력값과 함께 <code>pytest</code> 단위 테스트 작성안 제시</td>
+                    </tr>
+                    <tr>
+                      <td><strong>2. PEP 8 &amp; 가독성 / 변수 네이밍</strong></td>
+                      <td>PEP 8 스타일 가이드를 모르거나 일관성 없는 네이밍을 방치함</td>
+                      <td>PEP 8 컨벤션 준수, 명확한 변수 네이밍 규칙 제안, 내장 이름(<code>id, list</code>) 섀도잉 지적</td>
+                      <td>스타일 지적은 Ruff/Black 자동화 린터에 위임하자고 제안하며 로직 본질에 집중</td>
+                    </tr>
+                    <tr>
+                      <td><strong>3. 기본적인 예외 처리</strong></td>
+                      <td>bare <code>except: pass</code>를 방치하거나 예외 처리를 누락함</td>
+                      <td>기본적인 예외 처리 구조 확립, 구체적 예외(<code>except ValueError</code>) 및 로깅 제안</td>
+                      <td>원인 예외 체이닝 및 비즈니스 도메인 예외 정의를 통한 명확한 장애 원인 보존</td>
+                    </tr>
+                    <tr>
+                      <td><strong>4. 표준 라이브러리(stdlib) &amp; 기본 문법</strong></td>
+                      <td>C 스타일의 <code>for i in range(len(xs))</code>나 수동 루프에 의존</td>
+                      <td>표준 라이브러리 활용, <code>enumerate</code>, <code>zip</code>, 딕셔너리 조회 패턴 제안</td>
+                      <td><code>collections.Counter</code>, <code>pathlib.Path</code> 등 현대적 stdlib 모듈로 가독성 극대화</td>
+                    </tr>
+                    <tr>
+                      <td><strong>5. 피드백 전달력</strong></td>
+                      <td>"틀렸습니다"와 같이 감정적이거나 단답형 코멘트에 그침</td>
+                      <td>문제의 원인과 함께 구체적인 Before vs Good 개선 코드를 온화하게 제시</td>
+                      <td>우선순위 라벨(<code>[P0 Blocking]</code>, <code>[P3 Nit]</code>)을 명확히 분류하여 협업 피로도 최소화</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 5: Intermediate 레벨 코드 리뷰 루브릭 및 평가 기준 -->
+    <section class="slide" id="slide-5" data-title="Intermediate 레벨 코드 리뷰 루브릭 및 평가 기준" data-category="Level Rubric" data-level="mid">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Level Rubrics</span>
+                    <span class="badge badge-mid">INTERMEDIATE (인터미디엇)</span>
+                  </div>
+                  <h2 class="slide-title">Intermediate 코드 리뷰 평가 기준 및 상세 루브릭</h2>
+                </div>
+              </div>
+              <p class="lead-text">
+                인터미디엇 단계에서는 Pythonic 관용구(List/Dict Comprehension), 제너레이터(Generator)와 컨텍스트 매니저(Context Manager), 
+                PEP 484 타입 힌팅(Type Hint), 적절한 자료구조 선택, 리팩토링 및 모듈화, 객체지향/함수형 패러다임 설계를 평가합니다.
+              </p>
+              <div class="table-wrapper">
+                <table class="rubric-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 18%;">평가 차원</th>
+                      <th style="width: 25%;">미흡 (Unsatisfactory)</th>
+                      <th style="width: 28%;">우수 (Proficient)</th>
+                      <th style="width: 29%;">탁월 (Exemplary)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>1. 관용구 &amp; 컴프리헨션</strong></td>
+                      <td>복잡한 다중 루프를 무분별하게 중첩하거나 가독성 낮은 Comprehension 남용</td>
+                      <td>List/Dict Comprehension 및 표현식을 적재적소에 적용하여 Pythonic하게 개선</td>
+                      <td>대용량 데이터셋에서 메모리 폭발을 방지하는 Generator 표현식 및 스트리밍 전환</td>
+                    </tr>
+                    <tr>
+                      <td><strong>2. 제너레이터 &amp; 컨텍스트 매니저</strong></td>
+                      <td>파일/네트워크를 <code>try-finally</code>로 수동 해제하거나 누수 발생</td>
+                      <td><code>with</code> 컨텍스트 매니저, <code>@contextmanager</code>, Generator 생명주기 관리</td>
+                      <td><code>contextlib.ExitStack</code>을 활용하여 동적 가변 자원들을 안전하게 일괄 정리</td>
+                    </tr>
+                    <tr>
+                      <td><strong>3. 타입 시스템 (PEP 484)</strong></td>
+                      <td>타입 힌트가 없거나 불투명한 <code>Any</code>와 기본 <code>dict</code>를 남발함</td>
+                      <td>PEP 484 타입 힌팅(Type Hint), <code>dataclass</code>, <code>X | None</code>으로 시그니처 명확화</td>
+                      <td><code>typing.Protocol</code>(구조적 서브타이핑)을 도입하여 결합도를 낮추고 덕 타이핑을 정적 검증</td>
+                    </tr>
+                    <tr>
+                      <td><strong>4. 자료구조 &amp; 리팩토링·모듈화</strong></td>
+                      <td>루프 내 리스트 <code>in</code> 탐색($O(N^2)$)이나 단일 거대 함수(God function) 방치</td>
+                      <td>적절한 자료구조(<code>set, deque</code>) 선택, 순수 함수 분리 및 리팩토링과 모듈화 제안</td>
+                      <td>시간-공간 복잡도 분석, Functional Core &amp; Imperative Shell 패턴 적용</td>
+                    </tr>
+                    <tr>
+                      <td><strong>5. 테스트 설계 &amp; 예외 계층</strong></td>
+                      <td>성공 케이스 1개만 검증하거나 모킹 남용으로 의미 없는 테스트 작성</td>
+                      <td>경계값 테스트, <code>pytest.parametrize</code>, 명시적 도메인 예외 계층 설계</td>
+                      <td>결정론적 픽스처 설계, 부수효과 격리, 예외 원인 보존(<code>raise ... from</code>) 검증</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 6: Expert / Senior 레벨 코드 리뷰 루브릭 및 평가 기준 -->
+    <section class="slide" id="slide-6" data-title="Expert / Senior 레벨 코드 리뷰 루브릭 및 평가 기준" data-category="Level Rubric" data-level="sr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Level Rubrics</span>
+                    <span class="badge badge-sr">EXPERT / SENIOR (시니어)</span>
+                  </div>
+                  <h2 class="slide-title">Expert / Senior 코드 리뷰 평가 기준 및 상세 루브릭</h2>
+                </div>
+              </div>
+              <p class="lead-text">
+                시니어/엑스퍼트 단계에서는 Python Data Model(데이터 모델), Dunder 프로토콜, MRO 상속 해결 순서, 
+                GIL 및 CPython 메모리/GC(가비지 컬렉션), 동시성(AsyncIO/Multiprocessing), 메타프로그래밍, 성능 최적화 및 시스템 복원력을 평가합니다.
+              </p>
+              <div class="table-wrapper">
+                <table class="rubric-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 18%;">평가 차원</th>
+                      <th style="width: 25%;">미흡 (Unsatisfactory)</th>
+                      <th style="width: 28%;">우수 (Proficient)</th>
+                      <th style="width: 29%;">탁월 (Exemplary)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>1. Data Model &amp; Dunder 프로토콜</strong></td>
+                      <td>인스턴스 속성과 클래스 속성의 조회 우선순위나 프로토콜 메커니즘을 오해함</td>
+                      <td>파이썬 데이터 모델(Data Model) 이해, <code>__hash__</code>/<code>__eq__</code> 일관성, Dunder 프로토콜 준수</td>
+                      <td>디스크립터(Descriptor <code>__get__, __set_name__</code>) 및 객체 메모리 오버헤드(<code>__slots__</code>) 최적화</td>
+                    </tr>
+                    <tr>
+                      <td><strong>2. MRO &amp; 클래스 계층 구조</strong></td>
+                      <td>다중 상속 시 메서드 해석 순서(MRO)와 <code>super()</code>의 협력적 호출을 설명 못함</td>
+                      <td>C3 선형화(C3 Linearization) 알고리즘을 통한 다중 상속 MRO 해석 및 충돌 방지</td>
+                      <td>메타클래스(Metaclass) 남용을 지양하고 모던 <code>__init_subclass__</code> 훅으로 간결한 프레임워크 설계</td>
+                    </tr>
+                    <tr>
+                      <td><strong>3. CPython 런타임 (GIL, 메모리, GC)</strong></td>
+                      <td>참조 카운팅과 순환 GC의 차이를 모르거나 GIL이 있으면 스레드 안전하다고 착각</td>
+                      <td>GIL의 동작 원리(CPU 연산 vs I/O), 바운드 메서드/클로저 순환 참조 누수 진단</td>
+                      <td>CPython 세대별 가비지 컬렉션 세부 튜닝, <code>tracemalloc</code> 및 <code>weakref</code> 기반 무누수 설계</td>
+                    </tr>
+                    <tr>
+                      <td><strong>4. 동시성 (AsyncIO, 멀티프로세싱)</strong></td>
+                      <td>비동기 함수 내 블로킹 호출(<code>time.sleep</code>)을 놓치거나 태스크 수거 버그 방치</td>
+                      <td>동시성 아키텍처 수립, <code>TaskGroup</code> 구조적 동시성, 세마포어 기반 리소스 보호</td>
+                      <td>I/O 바운드(AsyncIO/Thread) vs CPU 바운드(ProcessPool) 격리, 경쟁 조건(Race condition) 원천 방어</td>
+                    </tr>
+                    <tr>
+                      <td><strong>5. 엔지니어링 리더십 &amp; 제도화</strong></td>
+                      <td>단일 PR에만 집착하거나 주관적인 선호도로 동료를 압박함</td>
+                      <td>문제의 근본 원인을 시스템적으로 규명하고, 하위 호환성 유지 마이그레이션 경로 제시</td>
+                      <td>Ruff 커스텀 린트 룰, mypy strict 옵션, CI 아키텍처 테스트로 재발 방지 제도화</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 7: 리뷰어 체크리스트 & Conventional Comments 프레임워크 -->
+    <section class="slide" id="slide-7" data-title="리뷰어 체크리스트 & Conventional Comments 프레임워크" data-category="Methodology" data-level="all">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Review Methodology</span>
+                    <span class="badge badge-core">STANDARDS</span>
+                  </div>
+                  <h2 class="slide-title">리뷰어 체크리스트 &amp; 이슈 심각도 트리아지(P0~P3)</h2>
+                </div>
+              </div>
+              <p class="lead-text">
+                성공적인 코드 리뷰 인터뷰를 위해서는 발견한 이슈의 심각도를 정확하게 분류(Triage)하고, 
+                상대방이 납득할 수 있는 근거 중심(관찰 → 위험 → 대안)의 커뮤니케이션을 펼쳐야 합니다.
+              </p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+                <div>
+                  <h3 style="margin-bottom: 0.75rem;">🏷️ 4단계 심각도 트리아지 표준</h3>
+                  <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="info-box danger">
+                      <h4>[P0 / Blocking] 치명적 결함 (배포 차단)</h4>
+                      <p>보안 취약점(RCE/SQLi), 데이터 손실 및 무결성 파괴(트랜잭션 부재, float 화폐 오차), 런타임 크래시, 치명적 메모리/FD 누수.</p>
+                    </div>
+                    <div class="info-box" style="border-left-color: var(--warn);">
+                      <h4 style="color: var(--warn);">[P1 / Major] 주요 결함 (수정 강력 권고)</h4>
+                      <p>대용량 OOM 메모리 적재, O(N²) 루프 병목, 외부 API 타임아웃 누락, 무차별적 예외 삼킴(bare except), 데이터 레이스.</p>
+                    </div>
+                    <div class="info-box success">
+                      <h4>[P2 / Suggestion] 설계 &amp; 유지보수성 (권장 사항)</h4>
+                      <p>Pythonic 관용구 미준수, 결합도 분리 및 단위 테스트 용이성, 타입 안정성(PEP 484 타입 힌팅), 모듈화.</p>
+                    </div>
+                    <div class="info-box" style="border-left-color: var(--text-muted);">
+                      <h4 style="color: var(--text-muted);">[P3 / Nit] 사소한 스타일 (선택 사항)</h4>
+                      <p>PEP 8 공백/포맷팅, 단순 네이밍 취향, 불필요한 주석. (린터 자동화에 위임 권장)</p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h3 style="margin-bottom: 0.75rem;">💬 피드백 작성 3단계 공식 (Evidence-Based)</h3>
+                  <div class="info-box">
+                    <h4>1. 객관적 사실 관찰 (Observation)</h4>
+                    <p>코드를 가리키며 발생 상황을 있는 그대로 명시합니다: <em>"L12에서 <code>tags: list = []</code>로 가변 객체를 기본 인자로 지정했습니다."</em></p>
+                  </div>
+                  <div class="info-box danger">
+                    <h4>2. 프로덕션 영향 및 위험도 설명 (Impact &amp; Why)</h4>
+                    <p>왜 문제가 되는지 CPython 메커니즘을 근거로 제시합니다: <em>"함수 정의 시점에 단 1회 평가되므로, 이전 호출의 태그 목록이 다음 사용자에게 공유되어 데이터 오염이 발생합니다."</em></p>
+                  </div>
+                  <div class="info-box success">
+                    <h4>3. 구체적인 동작 대안 코드 제시 (Actionable Good Solution)</h4>
+                    <p>복사해서 바로 적용 가능한 코드를 제안합니다: <em>"<code>tags: list[str] | None = None</code> 센티넬 패턴을 적용하고 본문에서 <code>if tags is None: tags = []</code>로 초기화해 주세요."</em></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 8: Chapter 2: 12대 핵심 안티패턴 (The Dirty Dozen) -->
+    <section class="slide" id="slide-8" data-title="Chapter 2: 12대 핵심 안티패턴 (The Dirty Dozen)" data-category="Chapter 2" data-level="all">
+      <div class="slide-content-wrapper" style="justify-content: center; align-items: center; text-align: center;">
+              <span class="badge badge-core" style="margin-bottom: 1rem;">CHAPTER 2</span>
+              <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-heading); margin-bottom: 1rem;">
+                The Dirty Dozen: 파이썬 12대 핵심 안티패턴
+              </h1>
+              <p class="lead-text" style="max-width: 720px; margin: 0 auto 2rem auto;">
+                파이썬 코드 리뷰 인터뷰에서 가장 빈번하게 출제되는 12가지 함정을 엄선했습니다.
+                CPython 내부 동작 메커니즘, 실행 가능한 Before vs After 코드, 그리고 린터 규칙과 실무 리뷰어 가이드를 심층 분석합니다.
+              </p>
+              <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; max-width: 800px;">
+                <span class="badge badge-jr">01. 가변 기본 인자</span>
+                <span class="badge badge-mid">02. 클로저 지연 바인딩</span>
+                <span class="badge badge-jr">03. 무차별적 예외 삼킴</span>
+                <span class="badge badge-jr">04. 얕은 복사 실수</span>
+                <span class="badge badge-jr">05. 리소스 누수</span>
+                <span class="badge badge-jr">06. 순회 중 컬렉션 수정</span>
+                <span class="badge badge-jr">07. 클래스 변수 변조</span>
+                <span class="badge badge-sr">08. GIL 동시성 오해</span>
+                <span class="badge badge-mid">09. 예외 체이닝 누락</span>
+                <span class="badge badge-mid">10. Naive Datetime</span>
+                <span class="badge badge-mid">11. SQL/쉘 인젝션</span>
+                <span class="badge badge-sr">12. 순환 참조 &amp; __del__</span>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 9: 01. 가변 기본 인자 (Mutable Default Arguments) -->
+    <section class="slide" id="slide-9" data-title="01. 가변 기본 인자 (Mutable Default Arguments)" data-category="Anti-Pattern" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 01</span>
+                    <span class="badge badge-jr">JUNIOR</span>
+                    <span class="badge badge-core">F4</span>
+                  </div>
+                  <h2 class="slide-title">가변 기본 인자 (Mutable Default Arguments)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  파이썬에서 함수 정의문(<code>def</code>)은 실행 구문입니다. 함수 기본 인자는 함수를 호출할 때가 아니라, 
+                  <strong>함수 정의 시점에 단 1회 평가</strong>(default argument evaluated at def time)되어 함수 객체의 
+                  <code>__defaults__</code> 튜플에 저장됩니다. 따라서 <code>[]</code>나 <code>{}</code> 같은 가변 객체를 기본값으로 지정하면, 
+                  함수가 여러 번 호출되는 동안 <strong>동일한 힙 메모리 객체의 참조가 모든 호출 간에 공유</strong>되어 이전 호출의 상태가 누적되는 치명적 부수효과가 발생합니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">가변 기본 인자 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 함수 정의 시점에 리스트가 생성되어 모든 호출 간에 공유됨
+def add_user(user_id: int, tags: list = []):
+    tags.append(f"user_{user_id}")
+    return {"id": user_id, "tags": tags}
+
+u1 = add_user(1)  # tags: ['user_1']
+u2 = add_user(2)  # tags: ['user_1', 'user_2']  <-- u1의 데이터가 오염됨!</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] None 센티넬 패턴으로 호출 시마다 독립된 새 리스트 생성
+def add_user(user_id: int, tags: list[str] | None = None):
+    if tags is None:
+        actual_tags = []
+    else:
+        actual_tags = list(tags)  # 방어적 복사
+    actual_tags.append(f"user_{user_id}")
+    return {"id": user_id, "tags": actual_tags}
+
+u1 = add_user(1)  # tags: ['user_1']
+u2 = add_user(2)  # tags: ['user_2']  <-- 완벽히 격리됨</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- def add_user(user_id: int, tags: list = []):
++ def add_user(user_id: int, tags: list[str] | None = None):
++     if tags is None:
++         actual_tags = []
++     else:
++         actual_tags = list(tags)
+-     tags.append(f"user_{user_id}")
+-     return {"id": user_id, "tags": tags}
++     actual_tags.append(f"user_{user_id}")
++     return {"id": user_id, "tags": actual_tags}</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff B006</strong> (mutable-argument-default) 및 <strong>B008</strong> 린트 규칙으로 CI에서 자동 검출 가능합니다. 
+                  리뷰 시 <em>"함수 정의 시점에 단 1회 평가되므로 <code>None</code> 센티넬 패턴(<code>None 센티넬</code>)을 적용하고 
+                  함수 내부에서 <code>if tags is None:</code>으로 초기화해 주세요"</em>라고 명확한 CPython 원리와 함께 피드백합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 10: 02. 클로저 지연 바인딩 (Late Binding in Closures) -->
+    <section class="slide" id="slide-10" data-title="02. 클로저 지연 바인딩 (Late Binding in Closures)" data-category="Anti-Pattern" data-level="mid">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 02</span>
+                    <span class="badge badge-mid">INTERMEDIATE</span>
+                    <span class="badge badge-core">F5</span>
+                  </div>
+                  <h2 class="slide-title">클로저 지연 바인딩 (Late Binding in Closures)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  파이썬의 클로저(Closure)는 외부 스코프의 변수를 캡처할 때 당시의 "값"을 복제하는 것이 아니라, 
+                  변수가 바인딩된 <strong>스코프 네임스페이스의 셀 객체(cell object)에 대한 변수 참조</strong>를 저장합니다 (LEGB 규칙). 
+                  클로저 함수가 실제로 호출될 때 셀 객체의 현재 값을 조회하므로, 루프가 끝난 후 클로저를 실행하면 
+                  모든 핸들러가 루프의 마지막 변수 값만을 바라보게 되는 지연 바인딩(Late binding) 현상이 발생합니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">클로저 지연 바인딩 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 루프 변수 i를 람다가 지연 바인딩하여 모두 마지막 값을 참조
+handlers = []
+for i in range(3):
+    handlers.append(lambda: i * 10)
+
+# 실행 시점: 모두 마지막 i=2 값을 참조하여 [20, 20, 20] 출력
+results = [h() for h in handlers]</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] 기본 매개변수 캡처(i=i) 또는 functools.partial로 즉시 바인딩
+from functools import partial
+
+# 대안 1: 기본 인자 바인딩 (default arg capture)
+handlers_arg = [lambda i=i: i * 10 for i in range(3)]
+
+# 대안 2: functools.partial 활용 (의도가 명확함)
+def multiply(factor: int, x: int) -> int:
+    return x * factor
+
+handlers_partial = [partial(multiply, 10, i) for i in range(3)]
+# results: [0, 10, 20]</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- for i in range(3):
+-     handlers.append(lambda: i * 10)
++ # 기본 매개변수 캡처로 생성 시점의 값 즉시 바인딩
++ handlers = [lambda i=i: i * 10 for i in range(3)]
++ # 또는 functools.partial(multiply, 10, i) 사용</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff B023</strong> (function-uses-loop-variable)로 탐지됩니다. 
+                  리뷰 시 <em>"람다 내부의 <code>i</code>는 값 복사가 아니라 셀 변수 참조이므로, 
+                  <code>lambda i=i:</code> 기본 매개변수 캡처를 적용하거나 <code>functools.partial</code>을 사용하여 
+                  생성 시점의 변수 상태를 고정해 주세요"</em>라고 제안합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 11: 03. 무차별적 예외 삼킴 (Bare except & Exception Swallowing) -->
+    <section class="slide" id="slide-11" data-title="03. 무차별적 예외 삼킴 (Bare except & Exception Swallowing)" data-category="Anti-Pattern" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 03</span>
+                    <span class="badge badge-jr">JUNIOR</span>
+                    <span class="badge badge-core">F6</span>
+                  </div>
+                  <h2 class="slide-title">무차별적 예외 삼킴 (Bare except &amp; Swallowing)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  타입을 명시하지 않은 <code>except:</code> 구문은 내부적으로 <code>except BaseException:</code>과 동일하게 동작합니다. 
+                  이는 표준 애플리케이션 에러(<code>Exception</code>)뿐만 아니라, 시스템 종료 신호인 <code>KeyboardInterrupt</code>(Ctrl+C), 
+                  <code>SystemExit</code>(<code>sys.exit()</code>), 그리고 비동기 취소(<code>asyncio.CancelledError</code>)까지 가로채 
+                  <strong>프로세스의 정상적인 종료를 방해하고 원인 은폐</strong>를 초래합니다. 
+                  또한 에러를 <code>pass</code>하거나 <code>print()</code>로만 삼키면 트레이스백이 영구 유실됩니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Bare except 및 예외 삼킴 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 모든 예외를 무차별 삼켜버려 장애 원인을 완전히 은폐함
+def get_user_balance(user_id: int) -> float:
+    try:
+        data = db.query_balance(user_id)
+        return float(data["amount"])
+    except:  # KeyboardInterrupt, SystemExit까지 가로채며 pass!
+        pass
+    return 0.0  # 잔액 0원인지 DB 장애인지 호출부에서 구분 불가</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] 구체적 예외를 지정하고 로깅하며 명시적으로 도메인 예외 전파
+import logging
+logger = logging.getLogger(__name__)
+
+class DatabaseError(Exception): pass
+
+def get_user_balance(user_id: int) -> float:
+    try:
+        data = db.query_balance(user_id)
+        return float(data["amount"])
+    except (KeyError, ValueError) as exc:
+        logger.warning("Invalid data format for user %s: %s", user_id, exc)
+        return 0.0
+    except ConnectionError as exc:
+        logger.error("DB connection failed for user %s", user_id, exc_info=True)
+        raise DatabaseError("Service temporarily unavailable") from exc</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">-     except:
+-         pass
+-     return 0.0
++     except (KeyError, ValueError) as exc:
++         logger.warning("Invalid data format for user %s", user_id)
++         return 0.0
++     except ConnectionError as exc:
++         logger.error("DB error for user %s", user_id, exc_info=True)
++         raise DatabaseError("Service unavailable") from exc</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff E722</strong> (bare-except), <strong>BLE001</strong> (blind-except), <strong>S110</strong> (try-except-pass)로 탐지됩니다. 
+                  리뷰 시 <em>"Bare <code>except:</code>는 <code>BaseException</code> 및 <code>KeyboardInterrupt</code>까지 포획하므로, 
+                  반드시 예상되는 구체적 예외를 명시하고 <code>logging</code> 모듈로 에러를 기록해 주세요"</em>라고 피드백합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 12: 04. 얕은 복사와 중첩 객체 참조 공유 (Shallow vs Deep Copy) -->
+    <section class="slide" id="slide-12" data-title="04. 얕은 복사와 중첩 객체 참조 공유 (Shallow vs Deep Copy)" data-category="Anti-Pattern" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 04</span>
+                    <span class="badge badge-jr">JUNIOR</span>
+                    <span class="badge badge-core">F7</span>
+                  </div>
+                  <h2 class="slide-title">얕은 복사와 중첩 객체 참조 공유 (Shallow vs Deep Copy)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  파이썬의 <code>list.copy()</code>, <code>dict.copy()</code>, 슬라이싱 <code>[:]</code>, 그리고 리스트 곱셈(<code>[[0] * 3] * 3</code>)은 
+                  모두 <strong>얕은 복사(Shallow Copy)</strong>입니다. 바깥 컨테이너 자체는 새로 할당되지만, 
+                  <strong>컨테이너 내부의 중첩 객체들은 동일한 메모리 포인터(참조 공유, 참조 복사)</strong>를 가리킵니다. 
+                  따라서 복사본의 중첩 객체를 수정하면 원본 객체까지 예기치 않게 변조되는 심각한 데이터 오염 버그가 발생합니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">얕은 복사 vs 깊은 복사 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 리스트 곱셈 또는 얕은 복사로 동일한 내부 리스트 참조 공유
+matrix = [[0] * 3] * 3
+matrix[0][0] = 99
+print(matrix)
+# 출력: [[99, 0, 0], [99, 0, 0], [99, 0, 0]]  <-- 3개 행이 모두 변경됨!
+
+original_dict = {"id": 1, "roles": ["admin"]}
+shallow_copy = original_dict.copy()
+shallow_copy["roles"].append("viewer")
+# original_dict["roles"]도 ['admin', 'viewer']로 오염됨!</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] 컴프리헨션으로 독립 객체 생성 또는 copy.deepcopy / 불변 객체 사용
+import copy
+from dataclasses import dataclass
+
+# 1. 2차원 리스트는 컴프리헨션으로 행마다 독립 할당
+matrix = [[0] * 3 for _ in range(3)]
+matrix[0][0] = 99  # 오직 첫 번째 행만 변경됨
+
+# 2. 중첩 가변 데이터는 copy.deepcopy 적용
+original_dict = {"id": 1, "roles": ["admin"]}
+deep_copied = copy.deepcopy(original_dict)
+
+# 3. 최선의 설계: 중첩 데이터 자체를 불변(tuple, frozen dataclass)으로 구성
+@dataclass(frozen=True)
+class UserProfile:
+    id: int
+    roles: tuple[str, ...] = ("admin",)</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- matrix = [[0] * 3] * 3
++ matrix = [[0] * 3 for _ in range(3)]
+
+- shallow_copy = original_dict.copy()
++ deep_copied = copy.deepcopy(original_dict)
++ # 또는 불변 자료구조(tuple, frozen dataclass) 사용</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  단순 정적 분석으로 탐지하기 어려운 전형적인 로직 결함입니다. 
+                  리뷰 시 <em>"<code>[[0] * 3] * 3</code>은 내부 행 객체의 참조를 3번 복제하므로 
+                  <code>[[0] * 3 for _ in range(3)]</code> 컴프리헨션으로 독립 할당해야 하며, 
+                  필요 시 <code>copy.deepcopy</code>를 사용하되 성능 비용을 고려하여 불변 자료구조(tuple)를 우선 검토하세요"</em>라고 조언합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 13: 05. 리소스 누수 및 컨텍스트 매니저 누락 (Resource Leak & Missing Context) -->
+    <section class="slide" id="slide-13" data-title="05. 리소스 누수 및 컨텍스트 매니저 누락 (Resource Leak & Missing Context)" data-category="Anti-Pattern" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 05</span>
+                    <span class="badge badge-jr">JUNIOR</span>
+                    <span class="badge badge-core">F8</span>
+                  </div>
+                  <h2 class="slide-title">리소스 누수 및 컨텍스트 매니저 누락 (Resource Leak)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  <code>open()</code> 호출 후 파일을 닫지 않을 때, "CPython의 참조 카운팅이 함수 종료 시 즉시 해제해 주겠지"라는 
+                  기대는 순환 참조나 예외 발생 시 무참히 깨집니다. 운영체제의 <strong>파일 디스크립터(FD) 한도 고갈(Too many open files)</strong>이 
+                  발생하며, PyPy나 비CPython 런타임에서는 <strong>가비지 컬렉션 지연으로 소켓과 파일 락이 지속 점유</strong>되는 치명적인 시스템 장애로 이어집니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">리소스 관리 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 예외 발생 시 close()가 호출되지 않거나 open() 후 방치
+def load_data(filepath: str):
+    f = open(filepath, "r")
+    data = json.load(f)  # 만약 JSONDecodeError 발생 시 파일 핸들 누수!
+    f.close()
+    return data</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] with 문 컨텍스트 매니저 및 contextlib.closing 활용
+from pathlib import Path
+import contextlib
+
+def load_data(filepath: str):
+    # with 문 필수 사용: 예외가 발생하더라도 __exit__에서 FD 즉시 반환
+    path = Path(filepath)
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+# 커스텀 소켓/제너레이터 자원의 경우 contextlib.closing 활용
+def stream_socket(sock):
+    with contextlib.closing(sock):
+        sock.sendall(b"ping")</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- f = open(filepath, "r")
+- data = json.load(f)
+- f.close()
+- return data
++ with open(filepath, "r", encoding="utf-8") as f:
++     return json.load(f)</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff SIM115</strong> (open-file-with-context-handler)로 탐지됩니다. 
+                  리뷰 시 <em>"파일 디스크립터 누수 방지를 위해 <code>with open(...)</code> <strong>with 문 필수 사용</strong>을 준수하고, 
+                  OS 기본 인코딩 충돌을 방지하기 위해 <code>encoding='utf-8'</code>을 반드시 명시해 주세요. 
+                  컨텍스트 프로토콜이 없는 객체는 <code>contextlib.closing</code>을 사용합니다"</em>라고 가이드합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 14: 06. 순회 중 컬렉션 요소 수정 (Modifying Sequence While Iterating) -->
+    <section class="slide" id="slide-14" data-title="06. 순회 중 컬렉션 요소 수정 (Modifying Sequence While Iterating)" data-category="Anti-Pattern" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 06</span>
+                    <span class="badge badge-jr">JUNIOR</span>
+                    <span class="badge badge-core">F9</span>
+                  </div>
+                  <h2 class="slide-title">순회 중 컬렉션 요소 수정 (Modifying While Iterating)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  파이썬 리스트의 이터레이터는 내부적으로 정수 인덱스 카운터를 1씩 증가시키며 요소를 순회합니다. 
+                  루프 도중 <code>lst.remove(item)</code>이나 <code>del lst[i]</code>를 실행하면 뒤쪽 원소들이 왼쪽으로 당겨지지만, 
+                  이터레이터의 내부 인덱스는 계속 다음 번호로 전진하므로 당겨진 바로 다음 요소는 검사되지 않고 
+                  <strong>건너뜀(skip) 현상 및 인덱스 밀림(index shifting)</strong>이 발생합니다. 딕셔너리의 경우 <code>RuntimeError</code>가 발생합니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">순회 중 컬렉션 수정 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 리스트 순회 중 remove() 호출 -> 연속된 원소를 조용히 건너뜀!
+numbers = [1, 2, 2, 3, 4]
+for n in numbers:
+    if n % 2 == 0:
+        numbers.remove(n)
+
+# 결과: [1, 2, 3]  <-- 두 번째 2가 건너뛰어져 남아있음 (크래시도 안 남!)</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] 리스트 컴프리헨션으로 새 리스트 생성 또는 복사본 순회
+numbers = [1, 2, 2, 3, 4]
+
+# 방법 1: 리스트 컴프리헨션 (가장 Pythonic하고 권장됨)
+numbers = [n for n in numbers if n % 2 != 0]
+# 결과: [1, 3]
+
+# 방법 2: 기존 리스트 객체 참조(identity)를 유지해야 할 때 슬라이스 할당
+numbers[:] = [n for n in numbers if n % 2 != 0]
+
+# 방법 3: 딕셔너리의 경우 list(dict.keys()) 복사본 순회
+d = {"a": 1, "b": 2}
+for k in list(d.keys()):
+    if d[k] == 1:
+        del d[k]</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- for n in numbers:
+-     if n % 2 == 0:
+-         numbers.remove(n)
++ # 리스트 컴프리헨션으로 새 리스트 생성
++ numbers = [n for n in numbers if n % 2 != 0]</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  에러가 발생하지 않고 조용히 잘못된 결과를 반환하므로 프로덕션에서 매우 위험합니다. 
+                  리뷰 시 <em>"리스트 순회 중 <code>remove()</code>는 인덱스 밀림으로 인해 연속된 타겟 원소를 건너뜁니다. 
+                  <strong>리스트 컴프리헨션</strong>(<code>[x for x in ... if ...]</code>)으로 <strong>새 리스트 생성</strong>하거나 
+                  <code>list(items)</code> <strong>복사본 순회</strong>를 적용해 주세요"</em>라고 안내합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 15: 07. 클래스 변수 vs 인스턴스 변수 변조 (Class vs Instance Variable Mutation) -->
+    <section class="slide" id="slide-15" data-title="07. 클래스 변수 vs 인스턴스 변수 변조 (Class vs Instance Variable Mutation)" data-category="Anti-Pattern" data-level="jr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 07</span>
+                    <span class="badge badge-jr">JUNIOR</span>
+                    <span class="badge badge-core">F10</span>
+                  </div>
+                  <h2 class="slide-title">클래스 변수 vs 인스턴스 변수 변조 (Class vs Instance)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  클래스 본문에 직접 선언된 가변 객체(리스트, 딕셔너리)는 인스턴스가 아닌 <strong>클래스 네임스페이스</strong>에 단 1회 바인딩됩니다. 
+                  한 인스턴스에서 <code>self.items.append()</code>를 실행하면 <strong>모든 인스턴스가 공유하는 클래스 변수</strong>를 제자리 변경(in-place mutation)하게 되어, 
+                  다른 인스턴스들의 상태까지 예기치 않게 전역 오염되는 대형 장애가 발생합니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">클래스 변수 vs 인스턴스 변수 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 클래스 본문에 가변 리스트를 선언하여 모든 인스턴스가 공유함
+class UserAccount:
+    permissions = []  # 클래스 네임스페이스에 선언됨!
+
+    def add_permission(self, perm: str):
+        self.permissions.append(perm)
+
+u1 = UserAccount()
+u1.add_permission("ADMIN")
+
+u2 = UserAccount()
+print(u2.permissions)  # ['ADMIN']  <-- u2도 관리자 권한을 획득함!</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] __init__에서 인스턴스 속성 초기화 또는 @dataclass 사용
+from dataclasses import dataclass, field
+
+class UserAccount:
+    def __init__(self):
+        # 인스턴스 네임스페이스(self)에 독립적으로 초기화
+        self.permissions = []
+
+    def add_permission(self, perm: str):
+        self.permissions.append(perm)
+
+# 또는 모던 파이썬 @dataclass 활용
+@dataclass
+class ModernUserAccount:
+    permissions: list[str] = field(default_factory=list)</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">class UserAccount:
+-     permissions = []
++     def __init__(self):
++         self.permissions = []
+      
+      def add_permission(self, perm: str):
+          self.permissions.append(perm)</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff RUF012</strong> (mutable-class-default)로 탐지됩니다. 
+                  리뷰 시 <em>"클래스 레벨에 정의된 가변 객체는 <strong>모든 인스턴스가 공유</strong>하므로, 
+                  반드시 <code>__init__에서 인스턴스 속성 초기화</code>하거나 <code>@dataclass</code>의 <code>field(default_factory=list)</code>를 
+                  사용하여 인스턴스 격리를 보장해 주세요"</em>라고 안내합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 16: 08. GIL과 동시성 오해: CPU 바운드 스레딩 vs 멀티프로세싱 -->
+    <section class="slide" id="slide-16" data-title="08. GIL과 동시성 오해: CPU 바운드 스레딩 vs 멀티프로세싱" data-category="Anti-Pattern" data-level="sr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 08</span>
+                    <span class="badge badge-sr">EXPERT</span>
+                    <span class="badge badge-core">F11</span>
+                  </div>
+                  <h2 class="slide-title">GIL과 동시성 오해: CPU 바운드 스레딩 vs 멀티프로세싱</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  많은 개발자가 "GIL(글로벌 인터프리터 락)이 있으므로 스레드 안전하다"고 오해하거나, CPU 연산에 <code>threading</code>을 투입합니다. 
+                  GIL은 CPython 내부 C 구조체만 보호할 뿐, 여러 바이트코드(<code>LOAD_FAST</code> → <code>BINARY_ADD</code> → <code>STORE_FAST</code>)로 
+                  분해되는 <strong>비원자적 연산(<code>+=</code>)의 데이터 레이스를 보호하지 않습니다</strong>. 
+                  또한 <strong>CPU 연산</strong>에 멀티스레드를 사용하면 GIL 경합과 OS 컨텍스트 스위칭 오버헤드로 인해 
+                  <strong>단일 스레드보다 실행 속도가 오히려 현저히 느려집니다</strong>.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">CPU 바운드 동시성 모델 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] CPU 바운드 연산에 threading.Thread를 사용하여 GIL 경합 유발
+import threading
+
+def cpu_heavy_task(n: int) -> int:
+    return sum(i * i for i in range(n))
+
+# 멀티스레드로 CPU 연산 실행 시 단일 스레드보다 훨씬 느림!
+threads = [threading.Thread(target=cpu_heavy_task, args=(10_000_000,)) for _ in range(4)]
+for t in threads: t.start()
+for t in threads: t.join()</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] CPU 연산은 ProcessPoolExecutor, I/O 연산은 asyncio / ThreadPool
+from concurrent.futures import ProcessPoolExecutor
+import os
+
+def cpu_heavy_task(n: int) -> int:
+    return sum(i * i for i in range(n))
+
+def run_parallel():
+    # 프로세스 단위로 분리하여 각 코어의 GIL 독립 실행
+    with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
+        futures = [executor.submit(cpu_heavy_task, 10_000_000) for _ in range(4)]
+        results = [f.result() for f in futures]
+    return results</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- threads = [threading.Thread(target=cpu_heavy_task, args=(...)) for _ in range(4)]
+- for t in threads: t.start()
+- for t in threads: t.join()
++ with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
++     results = list(executor.map(cpu_heavy_task, [10_000_000] * 4))</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  리뷰 시 <em>"<strong>I/O 바운드와 CPU 바운드 구분</strong>이 필수입니다. 
+                  네트워크/디스크 I/O는 <code>asyncio</code>나 <code>ThreadPoolExecutor</code>가 적합하지만, 
+                  무거운 CPU 연산은 CPython GIL(글로벌 인터프리터 락) 제약 때문에 멀티코어를 활용할 수 없으므로 
+                  반드시 <code>ProcessPoolExecutor</code> 또는 <code>multiprocessing</code>을 채택해야 합니다"</em>라고 아키텍처 관점에서 피드백합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 17: 09. 예외 체이닝 누락 및 트레이스백 단절 (Exception Chaining Suppression) -->
+    <section class="slide" id="slide-17" data-title="09. 예외 체이닝 누락 및 트레이스백 단절 (Exception Chaining Suppression)" data-category="Anti-Pattern" data-level="mid">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 09</span>
+                    <span class="badge badge-mid">INTERMEDIATE</span>
+                    <span class="badge badge-core">F12</span>
+                  </div>
+                  <h2 class="slide-title">예외 체이닝 누락 및 트레이스백 단절 (Exception Chaining)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  파이썬 3(PEP 3134)은 원인 예외(<code>__cause__</code>)와 맥락 예외(<code>__context__</code>)를 구분합니다. 
+                  <code>except</code> 블록 내부에서 새 예외를 발생시키면서 <code>from e</code> 체이닝을 누락하면, 
+                  원래 발생했던 에러의 정확한 위치와 스택 트레이스백(traceback) 연결이 모호해지거나 유실되어 
+                  <strong>프로덕션 운영 장애 발생 시 근본 원인 스택 추적이 극도로 어려워집니다</strong>.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">예외 체이닝 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 기존 예외 원인 연결 없이 새 도메인 예외를 단순 raise 하여 스택 단절
+import json
+
+class ConfigParseError(Exception): pass
+
+def parse_config(raw_json: str):
+    try:
+        return json.loads(raw_json)
+    except json.JSONDecodeError as e:
+        # 원래 JSONDecodeError의 줄 번호 및 원인이 유실됨!
+        raise ConfigParseError("Configuration syntax is invalid")</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] raise ... from e 구문으로 명시적 원인 체이닝 (__cause__ 설정)
+import json
+
+class ConfigParseError(Exception): pass
+
+def parse_config(raw_json: str):
+    try:
+        return json.loads(raw_json)
+    except json.JSONDecodeError as e:
+        # 원래 예외의 전체 트레이스백이 __cause__로 보존됨
+        raise ConfigParseError("Configuration syntax is invalid") from e
+
+# 내부 구현 은닉이 의도된 보안/공개 API 경계일 경우 명시적 절단:
+# raise ConfigParseError("Internal error") from None</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">except json.JSONDecodeError as e:
+-     raise ConfigParseError("Configuration syntax is invalid")
++     raise ConfigParseError("Configuration syntax is invalid") from e</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff B904</strong> (raise-without-from-inside-except) 린트 규칙으로 엄격히 감지됩니다. 
+                  리뷰 시 <em>"<code>except</code> 블록에서 새 도메인 예외를 던질 때는 
+                  <code>raise NewError from e</code>를 사용하여 원인 에러의 트레이스백 스택 추적을 온전히 보존해 주시고, 
+                  보안상 내부 스택을 숨겨야 하는 엔드포인트에서는 <code>from None</code>을 명시적으로 선언해 주세요"</em>라고 안내합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 18: 10. Naive vs Aware Datetime 함정과 UTC 원칙 -->
+    <section class="slide" id="slide-18" data-title="10. Naive vs Aware Datetime 함정과 UTC 원칙" data-category="Anti-Pattern" data-level="mid">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 10</span>
+                    <span class="badge badge-mid">INTERMEDIATE</span>
+                    <span class="badge badge-core">F13</span>
+                  </div>
+                  <h2 class="slide-title">Naive vs Aware Datetime 함정과 UTC 원칙 (Timezones)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  <code>datetime.now()</code>는 시스템 로컬 시간을 반환하지만 <code>tzinfo=None</code>인 <strong>naive 객체</strong>입니다. 
+                  과거 흔히 쓰이던 <code>datetime.utcnow()</code> 역시 UTC 시간이지만 naive 객체여서 <strong>Python 3.12부터 폐기(Deprecated)</strong>되었습니다. 
+                  Naive 객체와 타임존이 지정된 Aware 객체를 비교(<code>now &lt; aware_expiry</code>)하면 <code>TypeError</code>가 발생하며, 
+                  서버 배포 지역의 로컬 시간이나 <strong>서머타임(DST) 변화 및 UTC 변환</strong>에 의해 데이터 정렬과 만료 판정이 완전히 왜곡됩니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">Datetime 타임존 처리 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] naive datetime 사용 및 폐기된 utcnow() 호출
+from datetime import datetime
+
+created_at = datetime.utcnow()  # Python 3.12+ Deprecated! naive 객체 반환
+
+# 외부 API나 DB에서 ISO-8601 aware datetime이 들어올 경우:
+expires_at = datetime.fromisoformat("2026-10-06T15:00:00+00:00")
+
+if created_at > expires_at:  # TypeError: can't compare offset-naive and offset-aware datetimes!
+    print("Expired")</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] 항상 timezone.utc를 명시하고, 비즈니스 계산은 UTC 기준으로 수행
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+# 명시적 aware UTC 타임스탬프 생성 (Python 3.11+ 베스트 프랙티스)
+created_at = datetime.now(timezone.utc)
+expires_at = datetime.fromisoformat("2026-10-06T15:00:00+00:00")
+
+# 안전한 시각 비교 및 만료 검증
+if created_at > expires_at:
+    print("Expired")
+
+# 사용자 로컬 시간 표시 시 zoneinfo로 변환
+seoul_time = created_at.astimezone(ZoneInfo("Asia/Seoul"))</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- created_at = datetime.utcnow()
++ created_at = datetime.now(timezone.utc)</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff DTZ001~DTZ007</strong> (flake8-datetimez) 규칙으로 자동 검출할 수 있습니다. 
+                  리뷰 시 <em>"<code>datetime.utcnow()</code>는 폐기되었으므로 <code>datetime.now(timezone.utc)</code>를 사용해야 합니다. 
+                  모든 데이터베이스 저장 및 서버 간 통신은 <strong>UTC 저장 원칙</strong>을 엄수하고, 
+                  클라이언트 표시 시에만 <code>zoneinfo</code>를 사용해 로컬 시간으로 변환해 주세요"</em>라고 안내합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 19: 11. 동적 SQL/쉘 인젝션 취약점 (Dynamic SQL/Shell Injection) -->
+    <section class="slide" id="slide-19" data-title="11. 동적 SQL/쉘 인젝션 취약점 (Dynamic SQL/Shell Injection)" data-category="Anti-Pattern" data-level="mid">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 11</span>
+                    <span class="badge badge-mid">INTERMEDIATE</span>
+                    <span class="badge badge-core">F14</span>
+                  </div>
+                  <h2 class="slide-title">동적 SQL &amp; 쉘 인젝션 취약점 (Injection Flaws)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  사용자 입력값을 문자열 포맷팅(<code>f-string</code>, <code>%</code>, <code>+</code>)으로 SQL 쿼리나 쉘 명령어에 직접 결합하면, 
+                  인터프리터는 데이터와 명령 코드를 구분하지 못합니다. 공격자가 특수문자(<code>'</code>, <code>;</code>, <code>|</code>, <code>&amp;&amp;</code>)를 주입하여 
+                  <strong>인증 우회, 데이터베이스 탈취, 또는 시스템 원격 코드 실행(RCE)</strong>을 일으키는 치명적인 P0 보안 취약점입니다. 
+                  특히 <code>subprocess.run(..., shell=True)</code>는 쉘 메타문자를 그대로 실행하므로 극히 위험합니다.
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">SQL 및 쉘 인젝션 방어 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] f-string 문자열 포맷팅으로 외부 입력을 직접 결합 및 shell=True 사용
+import subprocess
+
+def query_user(cursor, username: str):
+    # SQL Injection 취약점: admin' -- 입력 시 무단 권한 탈취
+    cursor.execute(f"SELECT * FROM users WHERE name = '{username}'")
+
+def convert_image(filename: str):
+    # Shell Injection 취약점: test.png; rm -rf / 입력 시 RCE
+    subprocess.run(f"convert {filename} output.png", shell=True)</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] 파라미터화된 쿼리(DB-API) 및 shell=False 인자 리스트 사용
+import subprocess
+import shlex
+
+def query_user(cursor, username: str):
+    # 파라미터 바인딩: DB 엔진이 값으로 안전하게 이스케이프 처리
+    cursor.execute("SELECT * FROM users WHERE name = %s", (username,))
+
+def convert_image(filename: str):
+    # shell=False 기본값과 인수 리스트 전달로 쉘 인터프리터 우회 차단
+    subprocess.run(["convert", filename, "output.png"], shell=False, check=True)</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- cursor.execute(f"SELECT * FROM users WHERE name = '{username}'")
++ cursor.execute("SELECT * FROM users WHERE name = %s", (username,))
+
+- subprocess.run(f"convert {filename} output.png", shell=True)
++ subprocess.run(["convert", filename, "output.png"], shell=False, check=True)</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  <strong>Ruff S602</strong> (subprocess-popen-with-shell-equals-true), <strong>S608</strong> (hardcoded-sql-expression)으로 탐지됩니다. 
+                  리뷰 시 <em>"<strong>파라미터화된 쿼리</strong> 바인딩을 사용하여 SQL 인젝션을 원천 차단하고, 
+                  <code>subprocess.run</code> 호출 시에는 반드시 <code>shell=False</code> 및 토큰화된 인자 리스트(또는 <code>shlex.split()</code>)를 
+                  전달해 주세요"</em>라고 [P0 Blocking] 피드백을 남깁니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 20: 12. 순환 참조와 __del__의 함정 (Circular References & __del__) -->
+    <section class="slide" id="slide-20" data-title="12. 순환 참조와 __del__의 함정 (Circular References & __del__)" data-category="Anti-Pattern" data-level="sr">
+      <div class="slide-content-wrapper">
+              <div class="slide-header">
+                <div>
+                  <div class="slide-meta">
+                    <span class="slide-category">Anti-Pattern 12</span>
+                    <span class="badge badge-sr">EXPERT</span>
+                    <span class="badge badge-core">F15</span>
+                  </div>
+                  <h2 class="slide-title">순환 참조와 __del__의 함정 (Circular References)</h2>
+                </div>
+              </div>
+              
+              <div class="info-box danger">
+                <h4>⚙️ CPython 내부 메커니즘 분석</h4>
+                <p>
+                  CPython의 기본 메모리 관리는 <strong>참조 카운팅(Reference Counting)</strong>에 의존합니다. 
+                  두 객체가 서로를 강참조(Strong Reference)하면 참조 카운트가 결코 0이 되지 않아 순환 가비지 컬렉터(Cyclic GC)가 개입해야 합니다. 
+                  하지만 만약 두 객체 중 하나라도 <code>__del__</code> 파이널라이저를 정의하고 있으면, 
+                  CPython은 어떤 객체의 소멸자를 먼저 호출해야 안전한지 알 수 없어 수거를 포기하고 
+                  <strong>순환 가비지가 메모리에 영구 잔류하여 심각한 메모리 누수</strong>를 유발합니다 (Python 3.4 이전 uncollectable, 3.4+에서도 호출 순서 비결정론적).
+                </p>
+              </div>
+
+              
+    <div class="code-compare" data-mode="split">
+      <div class="compare-tabs">
+        <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">순환 참조 및 weakref 해결 비교</span>
+        <div class="tab-btn-group">
+          <button class="compare-tab tab-btn active" data-tab="split">◫ Split View</button>
+          <button class="compare-tab tab-btn" data-tab="before">❌ Before</button>
+          <button class="compare-tab tab-btn" data-tab="after">✅ After</button>
+          <button class="compare-tab tab-btn" data-tab="diff">📝 Diff</button>
+        </div>
+      </div>
+      <div class="compare-panes">
+        <div class="compare-pane pane-before pane-bad">
+          <div class="code-header">
+            <h4>❌ Before (Review 대상 / Bad)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [BAD] 양방향 강참조와 __del__ 정의로 인한 수거 지연 및 자원 정리 실패
+class Node:
+    def __init__(self, name):
+        self.name = name
+        self.parent = None
+        self.children = []
+
+    def add_child(self, child):
+        self.children.append(child)
+        child.parent = self  # 순환 강참조 형성! self <-> child
+
+    def __del__(self):
+        print(f"Cleanup node {self.name}")  # 수거 순서 비결정론적</code></pre>
+        </div>
+        <div class="compare-pane pane-after pane-good">
+          <div class="code-header">
+            <h4>✅ After (개선안 / Good)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python"># [GOOD] weakref.ref 활용 및 명시적 컨텍스트 매니저 자원 해제
+import weakref
+
+class Node:
+    def __init__(self, name):
+        self.name = name
+        self._parent = None  # weakref 프록시 저장
+        self.children = []
+
+    def add_child(self, child):
+        self.children.append(child)
+        child._parent = weakref.ref(self)  # 약한 참조(Weak reference)
+
+    @property
+    def parent(self):
+        return self._parent() if self._parent else None
+
+    def close(self):
+        self.children.clear()  # 명시적 자원 정리</code></pre>
+        </div>
+        <div class="compare-pane pane-diff">
+          <div class="code-header">
+            <h4>📝 Unified Line Diff (+/-)</h4>
+            <button class="btn-copy-code">복사</button>
+          </div>
+          <pre><code class="lang-python">- child.parent = self
++ child._parent = weakref.ref(self)
+
+- def __del__(self):
+-     # __del__ 대신 명시적 컨텍스트 매니저나 close() 메서드 권장
++ def close(self):
++     self.children.clear()</code></pre>
+        </div>
+      </div>
+    </div>
+    
+
+              <div class="info-box success">
+                <h4>🔍 리뷰어 체크리스트 &amp; 조언</h4>
+                <p>
+                  리뷰 시 <em>"양방향 트리나 캐시 구조에서 부모/리스너 참조는 <code>weakref.ref</code> 또는 <code>weakref.WeakSet</code>을 
+                  사용하여 <strong>약한 참조</strong>로 구성해야 참조 카운트 순환을 방지할 수 있습니다. 
+                  또한 <code>__del__</code>은 실행 시점이 비결정론적이므로 <strong>컨텍스트 매니저 자원 해제(with 문)</strong> 패턴을 적용해 주세요"</em>라고 권장합니다.
+                </p>
+              </div>
+            </div>
+    </section>
+
+
+    <!-- Slide 21: Chapter 3: 최신 모던 파이썬 (Python 3.10~3.12+) 핵심 기능 -->
+    <section class="slide" id="slide-21" data-title="Chapter 3: 최신 모던 파이썬 (Python 3.10~3.12+) 핵심 기능" data-category="Chapter 3" data-level="all">
+      <div class="slide-content-wrapper" style="justify-content: center; align-items: center; text-align: center;">
+          <span class="badge badge-core" style="margin-bottom: 1rem;">CHAPTER 3</span>
+          <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-heading); margin-bottom: 1rem;">
+            Modern Python 3.10~3.12+ Deep Dive
+          </h1>
+          <p class="lead-text" style="max-width: 720px; margin: 0 auto 2rem auto;">
+            인터뷰에서 시니어 역량을 증명하는 현대 파이썬의 표준 패러다임. 
+            구조적 패턴 매칭, 예외 그룹, 구조적 동시성 TaskGroup, 고급 메타프로그래밍 및 ExitStack을 다룹니다.
+          </p>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; max-width: 800px;">
+            <span class="badge badge-mid">Python 3.10 구조적 패턴 매칭</span>
+            <span class="badge badge-sr">Python 3.11 ExceptionGroup &amp; except*</span>
+            <span class="badge badge-sr">Python 3.11 asyncio.TaskGroup</span>
+            <span class="badge badge-sr">고급 메타프로그래밍: Descriptors &amp; __init_subclass__</span>
+            <span class="badge badge-mid">제너레이터 &amp; contextlib.ExitStack</span>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 22: 구조적 패턴 매칭 (Structural Pattern Matching 3.10+) -->
+    <section class="slide" id="slide-22" data-title="구조적 패턴 매칭 (Structural Pattern Matching 3.10+)" data-category="Modern Python" data-level="mid">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Modern Feature</span>
+                <span class="badge badge-mid">Python 3.10+</span>
+                <span class="badge badge-core">F16</span>
+              </div>
+              <h2 class="slide-title">구조적 패턴 매칭 (Structural Pattern Matching)</h2>
+            </div>
+          </div>
+          <p class="lead-text">
+            Python 3.10에 도입된 구조적 패턴 매칭(Pattern Matching)은 단순한 값 비교를 넘어, 
+            시퀀스 및 딕셔너리의 구조를 해체(Destructuring)하고 가드(Guard) 조건식과 결합하여 안전하게 매칭합니다.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <h4>match / case 문법과 가드 조건(if)</h4>
+              <pre><code class="lang-python"># Python 3.10+ 구조적 패턴 매칭 실무 예시
+def process_command(command: list[str] | dict):
+    match command:
+        case ["quit"]:
+            return "Shutdown service"
+            
+        case ["move", int(x), int(y)] if x > 0 and y > 0:
+            return f"Moving to positive coords ({x}, {y})"
+            
+        case {"action": "alert", "severity": ("high" | "critical")}:
+            return "Trigger urgent notification"
+            
+        case _:
+            return "Default fallback handler"
+              </code></pre>
+            </div>
+            <div>
+              <div class="info-box success">
+                <h4>💡 코드 리뷰어 관점 &amp; 가드레일</h4>
+                <ul>
+                  <li><strong>가드 조건 (Guard)</strong>: <code>case ... if condition:</code>으로 구조 매칭과 비즈니스 조건 검증을 1단계로 결합.</li>
+                  <li><strong>가독성 개선</strong>: 복잡하고 중첩된 <code>isinstance()</code>와 <code>if-elif-else</code> 체인을 획기적으로 정리.</li>
+                  <li><strong>와일드카드 <code>_</code></strong>: 처리되지 않은 모든 예외 입력에 대해 안전한 기본값 반환.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 23: Exception Groups & except* (Python 3.11+) -->
+    <section class="slide" id="slide-23" data-title="Exception Groups & except* (Python 3.11+)" data-category="Modern Python" data-level="sr">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Modern Feature</span>
+                <span class="badge badge-sr">Python 3.11+</span>
+                <span class="badge badge-core">F17</span>
+              </div>
+              <h2 class="slide-title">Exception Groups &amp; except* (다중 예외 처리)</h2>
+            </div>
+          </div>
+          <p class="lead-text">
+            비동기 태스크나 멀티스레드 배치 작업에서 여러 작업이 동시에 실패할 때 발생하는 
+            동시 다중 예외(concurrent errors)를 다루기 위해 Python 3.11에 <code>ExceptionGroup</code>과 <code>except*</code> 구문이 도입되었습니다.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <h4>ExceptionGroup과 except* 문법</h4>
+              <pre><code class="lang-python"># Python 3.11+ 다중 동시 예외 핸들링 예시
+try:
+    raise ExceptionGroup("Batch Job Multiple Failures", [
+        ValueError("Invalid User ID format: -1"),
+        TimeoutError("Connection to Redis pool timed out"),
+        ValueError("Negative price detected"),
+    ])
+except* ValueError as eg:
+    # ValueError에 해당하는 하위 그룹(subgroup)만 분할 처리
+    for exc in eg.exceptions:
+        print(f"Handled validation error: {exc}")
+except* TimeoutError as eg:
+    # TimeoutError에 해당하는 하위 그룹(subgroup) 처리
+    print(f"Retrying network operation: {eg}")
+              </code></pre>
+            </div>
+            <div>
+              <div class="info-box danger">
+                <h4>⚙️ CPython 메커니즘 &amp; 분할(Split) 동작</h4>
+                <p>
+                  <code>except*</code>는 전통적인 <code>except</code>와 달리 매칭된 에러들을 
+                  <strong>하위 그룹(subgroup)으로 자동 분할(split)</strong>하여 각 블록에 전달합니다. 
+                  동일한 예외 그룹 내에서 여러 <code>except*</code> 절이 동시에 매칭될 수 있으며, 
+                  처리되지 않은 나머지 예외들은 자동으로 상위 호출자에게 재전파됩니다.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 24: asyncio.TaskGroup & 구조적 동시성 (Python 3.11+) -->
+    <section class="slide" id="slide-24" data-title="asyncio.TaskGroup & 구조적 동시성 (Python 3.11+)" data-category="Modern Python" data-level="sr">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Modern Feature</span>
+                <span class="badge badge-sr">Python 3.11+</span>
+                <span class="badge badge-core">F18</span>
+              </div>
+              <h2 class="slide-title">asyncio.TaskGroup &amp; 구조적 동시성 (Structured Concurrency)</h2>
+            </div>
+          </div>
+          <p class="lead-text">
+            기존 <code>asyncio.gather</code>는 한 태스크가 실패해도 다른 태스크가 취소되지 않고 고아(orphan)로 남아 소켓 누수를 유발했습니다. 
+            Python 3.11의 <code>asyncio.TaskGroup</code>은 <strong>구조적 동시성(Structured Concurrency)</strong>을 도입하여 
+            하나의 작업이 실패하면 나머지 백그라운드 태스크들에 즉시 <strong>자동 취소(cancellation)</strong> 신호를 전파합니다.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <h4>async with asyncio.TaskGroup()</h4>
+              <pre><code class="lang-python">import asyncio
+
+async def fetch_user(user_id: int): ...
+async def fetch_orders(user_id: int): ...
+
+async def run_pipeline():
+    # 구조적 동시성 컨텍스트: 한 태스크라도 실패 시
+    # 나머지 태스크에 즉시 자동 취소(cancellation) 신호 전달
+    async with asyncio.TaskGroup() as tg:
+        t1 = tg.create_task(fetch_user(42))
+        t2 = tg.create_task(fetch_orders(42))
+
+    # 블록을 정상 탈출하면 t1, t2가 모두 성공했음이 보장됨
+    return t1.result(), t2.result()
+              </code></pre>
+            </div>
+            <div>
+              <div class="info-box success">
+                <h4>🔍 asyncio.gather vs TaskGroup 비교</h4>
+                <ul>
+                  <li><code>gather</code>: 개별 태스크 취소 전파가 수동이어서 고아 백그라운드 태스크 누수 빈발.</li>
+                  <li><code>TaskGroup</code>: <code>async with TaskGroup()</code> 스코프 내에서 모든 태스크의 정상 완료 또는 안전한 취소를 강제.</li>
+                  <li>복수 태스크 실패 시 <code>ExceptionGroup</code>으로 묶어 반환하므로 <code>except*</code>와 완벽히 결합.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 25: 고급 메타프로그래밍: Descriptors & __init_subclass__ -->
+    <section class="slide" id="slide-25" data-title="고급 메타프로그래밍: Descriptors & __init_subclass__" data-category="Modern Python" data-level="sr">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Advanced Metaprogramming</span>
+                <span class="badge badge-sr">EXPERT</span>
+                <span class="badge badge-core">F19</span>
+              </div>
+              <h2 class="slide-title">디스크립터(Descriptors) &amp; __init_subclass__</h2>
+            </div>
+          </div>
+          <p class="lead-text">
+            복잡하고 가독성이 떨어지는 Metaclass(메타클래스)를 남용하지 않고도, 
+            디스크립터 프로토콜(<code>__get__</code>, <code>__set__</code>, <code>__set_name__</code>)과 
+            <code>__init_subclass__</code> 훅을 통해 데이터 유효성 검증(validation)과 프레임워크 플러그인 등록을 우아하게 구현합니다.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <h4>디스크립터 속성 유효성 검증</h4>
+              <pre><code class="lang-python">class NonNegativeInteger:
+    def __set_name__(self, owner, name):
+        # 속성 이름을 자동으로 프라이빗 필드명으로 바인딩
+        self.private_name = f"_{name}"
+
+    def __get__(self, instance, owner):
+        if instance is None: return self
+        return getattr(instance, self.private_name, 0)
+
+    def __set__(self, instance, value):
+        # 데이터 유효성 검증 (Validation)
+        if not isinstance(value, int) or value < 0:
+            raise ValueError(f"Value must be non-negative int, got {value}")
+        setattr(instance, self.private_name, value)
+              </code></pre>
+            </div>
+            <div>
+              <h4>__init_subclass__ 클래스 등록 훅</h4>
+              <pre><code class="lang-python">class PluginBase:
+    registry = {}
+
+    # 메타클래스(Metaclass) 없이 서브클래스 자동 커스터마이징
+    def __init_subclass__(cls, plugin_name: str, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not plugin_name:
+            raise ValueError("plugin_name is required")
+        cls.registry[plugin_name] = cls
+
+class SlackNotifier(PluginBase, plugin_name="slack"):
+    pass
+              </code></pre>
+            </div>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 26: 제너레이터 심화 & contextlib.ExitStack -->
+    <section class="slide" id="slide-26" data-title="제너레이터 심화 & contextlib.ExitStack" data-category="Modern Python" data-level="mid">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Modern Python</span>
+                <span class="badge badge-mid">INTERMEDIATE</span>
+                <span class="badge badge-core">F20</span>
+              </div>
+              <h2 class="slide-title">제너레이터 심화 &amp; contextlib.ExitStack 자원 해제</h2>
+            </div>
+          </div>
+          <p class="lead-text">
+            제너레이터의 <code>yield</code> 프로토콜과 <code>send()</code>/<code>close()</code> 코루틴 제어, 
+            그리고 <code>@contextlib.contextmanager</code> 데코레이터. 
+            특히 런타임에 동적으로 개수가 결정되는 복수 리소스(파일, 소켓, 트랜잭션 락)는 
+            <code>contextlib.ExitStack</code>을 통해 안전하게 일괄 cleanup합니다.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div>
+              <h4>ExitStack 동적 다중 자원 관리</h4>
+              <pre><code class="lang-python">from contextlib import ExitStack, contextmanager
+from pathlib import Path
+
+def merge_files(input_paths: list[Path], output_path: Path):
+    with ExitStack() as stack:
+        # 파일이 몇 개든 예외 발생 시 역순으로 안전하게 자동 자원 해제
+        files = [stack.enter_context(p.open("r", encoding="utf-8")) for p in input_paths]
+        out = stack.enter_context(output_path.open("w", encoding="utf-8"))
+        for f in files:
+            out.write(f.read())
+              </code></pre>
+            </div>
+            <div>
+              <h4>@contextmanager와 try/finally 자원 해제</h4>
+              <pre><code class="lang-python">import time
+from contextlib import contextmanager
+
+@contextmanager
+def execution_timer(label: str):
+    start = time.perf_counter()
+    try:
+        # yield 전: 리소스 진입 / 타이머 시작
+        yield
+    finally:
+        # yield 후: 에러가 발생해도 반드시 실행되는 cleanup 자원 해제
+        elapsed = time.perf_counter() - start
+        print(f"[{label}] Elapsed: {elapsed:.4f}s")
+              </code></pre>
+            </div>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 27: Chapter 4: 실전 코드 리뷰 모의 인터뷰 9선 (Scenarios) -->
+    <section class="slide" id="slide-27" data-title="Chapter 4: 실전 코드 리뷰 모의 인터뷰 9선 (Scenarios)" data-category="Chapter 4" data-level="all">
+      <div class="slide-content-wrapper" style="justify-content: center; align-items: center; text-align: center;">
+          <span class="badge badge-core" style="margin-bottom: 1rem;">CHAPTER 4</span>
+          <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-heading); margin-bottom: 1rem;">
+            실전 코드 리뷰 모의 인터뷰 9선
+          </h1>
+          <p class="lead-text" style="max-width: 720px; margin: 0 auto 2rem auto;">
+            Junior (J1~J3), Intermediate (M1~M3), Expert (E1~E3) 수준별 실제 프로덕션 PR 시나리오입니다.
+            PR 맥락, 결함 코드, P0~P3 심각도별 체크포인트, 시니어 리뷰어 모범 피드백, 그리고 프로덕션 리팩토링 개선 코드를 단계별로 확인하세요.
+          </p>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; max-width: 850px;">
+            <span class="badge badge-jr">J1. 알림 전송 배치 디스패처</span>
+            <span class="badge badge-jr">J2. 결제 금액 장바구니 계산 엔진</span>
+            <span class="badge badge-jr">J3. 멀티테넌트 설정 파일 로더</span>
+            <span class="badge badge-mid">M1. 결제 게이트웨이 HTTP 클라이언트</span>
+            <span class="badge badge-mid">M2. 사용자 지갑 이체 동시성 원장</span>
+            <span class="badge badge-mid">M3. 대용량 이벤트 로그 수집 파이프라인</span>
+            <span class="badge badge-sr">E1. 비동기 크롤러 &amp; 워커 파이프라인</span>
+            <span class="badge badge-sr">E2. 멀티서비스 TTL 캐시 데코레이터</span>
+            <span class="badge badge-sr">E3. 보안 격리 동적 리포트 생성 서브프로세스</span>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 28: J1: 사용자 알림 배치 디스패처 (Notification Service) -->
+    <section class="slide" id="slide-28" data-title="J1: 사용자 알림 배치 디스패처 (Notification Service)" data-category="Mock Scenario" data-level="jr">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F21</span>
+        <span class="badge badge-jr">JUNIOR</span>
+        <span class="badge badge-core">F21</span>
+      </div>
+      <h2 class="slide-title">J1: 사용자 알림 배치 디스패처 (Notification Service)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="jr">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 사용자 알림 전송 배치 디스패처</h4>
+      <span class="badge badge-jr">JUNIOR</span>
+    </div>
+<p><strong>[PR #104] 활성 사용자 대상 배치 알림 전송 및 실패 재시도 로직 추가</strong><br>
+        매일 자정 활성 사용자들에게 템플릿 알림을 전송하는 배치 유틸리티입니다. 비활성 사용자는 전송 목록에서 제외하고, 실패 시 3회 재시도합니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (notification_service.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">import time
+
+def send_notification(users, template, retry_delays=[1, 2, 5], failed_log={}):
+    """활성 사용자에게 알림 전송 배치 디스패치 함수"""
+    for i in range(len(users)):
+        user = users[i]
+        
+        # 비활성 사용자 목록에서 제거
+        if user["is_active"] == False:
+            users.remove(user)
+            continue
+            
+        success = False
+        for attempt in range(len(retry_delays)):
+            try:
+                deliver_alert(user["email"], template.format(name=user["name"]))
+                success = True
+                break
+            except:
+                print("Failed to dispatch alert to " + user["name"])
+                time.sleep(retry_delays[attempt])
+                
+        if success == False:
+            failed_log[user["name"]] = "Failed after retries"
+            
+    return failed_log</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>가변 기본 인자 (<code>failed_log={}</code>)</strong>: 함수 정의 시점 평가로 인해 두 번째 배치 실행 시 이전 실행의 실패 로그가 누적되는 치명적 버그.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>순회 중 리스트 수정 (<code>users.remove()</code>)</strong>: 인덱스 밀림으로 인해 연속된 비활성 사용자 중 두 번째 사용자를 건너뛰고 메일을 오발송함. 원본 인자 변조.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>무차별 Bare <code>except:</code> 사용</strong>: <code>KeyboardInterrupt</code>까지 가로채며 프로세스 중단을 방해하고 실제 예외 원인 유실.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>동명이인 키 충돌</strong>: <code>user['name']</code>을 딕셔너리 키로 사용하여 동명이인 발생 시 실패 기록 덮어쓰기 발생.</li>
+        <li class="checkpoint-item"><span class="p-tag p2">P2 Suggestion</span> <strong>Pythonic 순회 부재</strong>: <code>range(len(users))</code> 대신 리스트 컴프리헨션이나 제너레이터 필터링 권장.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">안녕하세요! 배치 알림 전송 구현 감사드립니다. 안정적인 프로덕션을 위해 몇 가지 치명적 이슈 수정이 필요합니다.
+1. [P0 Blocking] L3 가변 기본 인자: failed_log={}는 모듈 로드 시 단 1회 생성되어 모든 호출 간 공유됩니다. failed_log=None 센티넬 패턴으로 변경해 주세요.
+2. [P0 Blocking] L10 순회 중 remove(): 리스트를 순회하며 remove()를 호출하면 인덱스가 당겨져 다음 비활성 사용자를 건너뛰는 대형 사고가 발생합니다. [u for u in users if u.get('is_active')] 형태로 새 리스트로 필터링해야 합니다.
+3. [P0 Blocking] L19 bare except: KeyboardInterrupt까지 삼켜버립니다. 구체적 예외를 명시하고 logging.warning()을 사용해 주세요.
+4. [P1 Major] L24 키 충돌: user['name'] 대신 고유한 user['id']를 키로 사용해 주세요.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">import logging
+import time
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
+
+class NotificationDeliveryError(Exception): pass
+
+@dataclass(frozen=True)
+class User:
+    id: int
+    name: str
+    email: str
+    is_active: bool
+
+def send_notification(
+    users: Sequence[User],
+    template: str,
+    retry_delays: Sequence[float] = (1.0, 2.0, 5.0),
+    failed_log: dict[int, str] | None = None
+) -> dict[int, str]:
+    failures = dict(failed_log) if failed_log is not None else {}
+    active_users = [u for u in users if u.is_active]
+
+    for user in active_users:
+        success = False
+        for delay in retry_delays:
+            try:
+                deliver_alert(user.email, template.format(name=user.name))
+                success = True
+                break
+            except NotificationDeliveryError as exc:
+                logger.warning("Failed delivery to user %s (%s): %s", user.id, user.email, exc)
+                time.sleep(delay)
+        
+        if not success:
+            failures[user.id] = f"Failed to deliver after {len(retry_delays)} retries"
+
+    return failures</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 29: J2: 장바구니 및 할인 계산 엔진 (Checkout Pricing) -->
+    <section class="slide" id="slide-29" data-title="J2: 장바구니 및 할인 계산 엔진 (Checkout Pricing)" data-category="Mock Scenario" data-level="jr">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F22</span>
+        <span class="badge badge-jr">JUNIOR</span>
+        <span class="badge badge-core">F22</span>
+      </div>
+      <h2 class="slide-title">J2: 장바구니 및 할인 계산 엔진 (Checkout Pricing)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="jr">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 이커머스 결제 금액 장바구니 계산 엔진</h4>
+      <span class="badge badge-jr">JUNIOR</span>
+    </div>
+<p><strong>[PR #205] 이커머스 장바구니 결제 금액 및 할인 쿠폰 적용 로직</strong><br>
+        장바구니(Cart)에 담긴 상품 가격과 수량을 합산하고, 퍼센트 할인 및 정액 할인 쿠폰을 적용하여 최종 결제 금액을 계산합니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (checkout.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">class Cart:
+    items = []  # 장바구니 아이템 목록 (클래스 변수!)
+
+    def add_item(self, name, price, quantity=1):
+        self.items.append({"name": name, "price": float(price), "quantity": quantity})
+
+    def calculate_total(self, discount_percent=0.0, coupon_code=""):
+        total = 0.0
+        for item in self.items:
+            total += item["price"] * item["quantity"]
+            
+        # 할인율 적용 (Pricing 계산)
+        if discount_percent:
+            total = total - (total * (discount_percent / 100))
+            
+        if coupon_code == "VIP_10":
+            total -= 10000.0  # 정액 만원 할인
+            
+        return total  # 음수 금액 반환 가능성 있음!</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>클래스 변수 <code>items = []</code> 공유</strong>: 장바구니 인스턴스 간에 상품 목록이 공유되어 다른 고객의 장바구니와 섞이는 치명적 버그.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>부동소수점(float) 화폐 오차</strong>: <code>float</code> 연산 시 <code>0.1 + 0.2 != 0.3</code>과 같은 이진 부동소수점 오차로 정산 금액 불일치 발생. <code>Decimal</code> 필수.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>음수 결제 금액 허용</strong>: 할인 금액이 총액보다 클 때 최종 결제 금액이 음수가 되어 역결제 사고 가능. <code>max(Decimal(0), total)</code> 방어 필요.</li>
+        <li class="checkpoint-item"><span class="p-tag p2">P2 Suggestion</span> <strong>불투명한 dict 대신 dataclass</strong>: <code>item["name"]</code> 대신 정적 타입이 부여된 <code>CartItem</code> 모델 도입.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">장바구니 계산 로직 구현 감사드립니다! 금융/커머스 정산에서 가장 중요한 정확성을 위해 필수 수정 사항 공유합니다.
+1. [P0 Blocking] L2 items = []: 클래스 변수로 선언되어 모든 사용자가 장바구니를 공유합니다. def __init__(self): self.items = []로 인스턴스 속성으로 격리해야 합니다.
+2. [P0 Blocking] L5, L8 부동소수점 float 화폐 계산: 이진 부동소수점 오차로 1원 단위 정산 불일치가 발생합니다. 반드시 decimal.Decimal을 사용해 주세요.
+3. [P1 Major] L18 음수 결제 금액: 쿠폰 할인액이 주문액보다 크면 total이 음수가 됩니다. max(Decimal('0'), total)로 하한선을 검증해 주세요.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">from decimal import Decimal, ROUND_HALF_UP
+from dataclasses import dataclass, field
+
+@dataclass(frozen=True)
+class CartItem:
+    name: str
+    price: Decimal
+    quantity: int = 1
+
+    @property
+    def subtotal(self) -> Decimal:
+        return self.price * self.quantity
+
+class Cart:
+    def __init__(self):
+        self.items: list[CartItem] = []
+
+    def add_item(self, name: str, price: Decimal, quantity: int = 1) -> None:
+        self.items.append(CartItem(name=name, price=Decimal(str(price)), quantity=quantity))
+
+    def calculate_total(self, discount_percent: Decimal = Decimal("0"), coupon_code: str = "") -> Decimal:
+        raw_total = sum((item.subtotal for item in self.items), Decimal("0"))
+        
+        # 백분율 할인 적용
+        if discount_percent > Decimal("0"):
+            discount_amount = (raw_total * (discount_percent / Decimal("100"))).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
+            raw_total -= discount_amount
+            
+        # 정액 쿠폰 할인
+        if coupon_code == "VIP_10":
+            raw_total -= Decimal("10000")
+            
+        return max(Decimal("0"), raw_total)</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 30: J3: 멀티테넌트 설정 파일 로더 (Config Loader) -->
+    <section class="slide" id="slide-30" data-title="J3: 멀티테넌트 설정 파일 로더 (Config Loader)" data-category="Mock Scenario" data-level="jr">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F23</span>
+        <span class="badge badge-jr">JUNIOR</span>
+        <span class="badge badge-core">F23</span>
+      </div>
+      <h2 class="slide-title">J3: 멀티테넌트 설정 파일 로더 (Config Loader)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="jr">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 설정 파일 및 환경변수 파서</h4>
+      <span class="badge badge-jr">JUNIOR</span>
+    </div>
+<p><strong>[PR #302] 멀티 환경 설정 파일 로드 및 키-값 파싱</strong><br>
+        로컬 및 프로덕션 환경의 <code>config.env</code> 설정 파일을 읽어 딕셔너리로 변환하는 파서 함수입니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (config_loader.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">_default_config = {}
+
+def load_config(file_path):
+    """설정 파일을 열어 KEY=VALUE 딕셔너리로 파싱하는 유틸리티"""
+    f = open(file_path)  # 리소스 누수 및 인코딩 미지정
+    lines = f.readlines()
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith("#"):
+            continue
+        key, val = line.split("=")  # 빈 줄이나 '=' 없는 줄에서 ValueError 크래시!
+        _default_config[key] = val
+        
+    f.close()  # 중간에 에러 나면 닫히지 않음
+    return _default_config</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>파일 디스크립터 누수 (파일 누수)</strong>: <code>open()</code> 후 <code>split('=')</code>에서 <code>ValueError</code> 크래시 발생 시 <code>close()</code>가 영구히 호출되지 않음.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>인코딩(encoding) 미지정</strong>: <code>encoding='utf-8'</code> 누락으로 윈도우(CP949) 및 리눅스 로캘 환경에 따라 한글 주석 파싱 실패.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>전역 딕셔너리 오염</strong>: <code>_default_config</code> 전역 변수에 누적되어 여러 설정 파일 로드 시 이전 설정이 뒤섞임.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>구분자 파싱 결함</strong>: 값에 <code>=</code>가 포함되어 있거나(예: URL, Base64 토큰) 빈 줄인 경우 즉시 크래시. <code>split('=', 1)</code> 및 빈 줄 가드 필요.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">설정 로더 작성 감사드립니다! 견고한 서버 기동을 위해 파일 핸들 및 파싱 안전성 개선점을 공유합니다.
+1. [P0 Blocking] L5 with open() 및 인코딩: 중간에 라인 파싱 에러가 발생하면 f.close()가 호출되지 않아 파일 핸들이 누수됩니다. with open(file_path, 'r', encoding='utf-8') as f: 형태로 감싸주세요.
+2. [P0 Blocking] L11 split('=') 크래시: 빈 줄이나 '='가 없는 줄에서 ValueError가 발생하며, 값에 '='가 포함된 경우(URL 파라미터 등) 오작동합니다. if not line: continue 후 line.split('=', 1)로 1회만 분리해야 합니다.
+3. [P1 Major] L1 _default_config 전역 상태: 함수 내부에서 새 딕셔너리를 생성해 반환해 주세요.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">from pathlib import Path
+
+class ConfigParseError(Exception): pass
+
+def load_config(file_path: str | Path) -> dict[str, str]:
+    path = Path(file_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"Config file not found: {path}")
+
+    config: dict[str, str] = {}
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            for line_no, raw_line in enumerate(f, start=1):
+                line = raw_line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    raise ConfigParseError(f"Malformed config line {line_no}: missing '='")
+                
+                key, val = line.split("=", 1)
+                config[key.strip()] = val.strip()
+    except UnicodeDecodeError as exc:
+        raise ConfigParseError(f"Failed to decode config with UTF-8: {path}") from exc
+
+    return config</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 31: M1: 결제 게이트웨이 HTTP 클라이언트 (Payment Gateway Client) -->
+    <section class="slide" id="slide-31" data-title="M1: 결제 게이트웨이 HTTP 클라이언트 (Payment Gateway Client)" data-category="Mock Scenario" data-level="mid">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F24</span>
+        <span class="badge badge-mid">INTERMEDIATE</span>
+        <span class="badge badge-core">F24</span>
+      </div>
+      <h2 class="slide-title">M1: 결제 게이트웨이 HTTP 클라이언트 (Payment Gateway Client)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="mid">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 외부 결제 게이트웨이 HTTP 연동 모듈</h4>
+      <span class="badge badge-mid">INTERMEDIATE</span>
+    </div>
+<p><strong>[PR #401] 외부 결제 승인 API 호출 및 지수 백오프 재시도 클라이언트</strong><br>
+        신용카드 결제 요청을 외부 PG사로 전송하고, 네트워크 일시 오류 시 재시도하는 결제 연동 클라이언트입니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (payment_client.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">import requests
+import time
+
+class PaymentClient:
+    def __init__(self, api_url):
+        self.api_url = api_url
+
+    def charge(self, order_id, amount, card_number, max_retries=3):
+        """외부 PG사에 결제 승인 요청을 전송하고 재시도하는 함수"""
+        payload = {"order_id": order_id, "amount": amount, "card_number": card_number}
+        
+        for attempt in range(max_retries):
+            try:
+                # 타임아웃 누락! 무한 대기로 워커 스레드 풀 고갈
+                resp = requests.post(f"{self.api_url}/v1/charge", json=payload)
+                return resp.json()
+            except Exception as e:
+                # PII 카드번호를 평문으로 로그에 노출
+                print(f"Charge failed for card {card_number}, retrying: {e}")
+                time.sleep(2 ** attempt)  # 지터(jitter) 없는 고정 백오프
+                
+        return None  # 실패 시 암묵적 None 반환으로 호출부 크래시</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>HTTP 타임아웃 부재 (타임아웃 누락)</strong>: <code>timeout</code> 매개변수가 없어 PG사 응답 지연 시 서버의 모든 워커 스레드가 블로킹되어 전체 서비스 마비.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>비멱등성 재시도 (멱등성 키 부재)</strong>: 타임아웃 발생 시 이미 PG사에서 결제가 승인되었을 수 있는데, 멱등키(Idempotency Key) 없이 재시도하여 <strong>이중 결제 사고</strong> 발생.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>개인정보(PII) 로그 평문 노출</strong>: 신용카드 번호(PAN)를 그대로 콘솔에 출력하여 PCI-DSS 컴플라이언스 및 개인정보보호법 위반.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>암묵적 None 반환 및 고정 지수 백오프</strong>: 지터(Jitter)가 없어 썬더링 허드(Thundering Herd) 유발, 실패 시 예외 대신 None 반환.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">결제 연동 PR 감사드립니다! 금융 서비스의 안정성과 고객 자산 보호를 위해 필수 수정 사항 공유합니다.
+1. [P0 Blocking] L13 requests.post 타임아웃: timeout=(3.0, 10.0)을 명시하지 않으면 외부 장애 시 우리 서버 워커가 모두 멈춥니다.
+2. [P0 Blocking] L11 멱등성 키(Idempotency-Key): 네트워크 타임아웃 후 재시도 시 동일 주문이 2번 결제될 수 있습니다. 헤더에 Idempotency-Key(order_id 기반 UUID)를 포함해야 합니다.
+3. [P0 Blocking] L17 PII 로그 노출: 카드번호 전체를 로그에 남기는 것은 PCI-DSS 위반입니다. card_number[-4:] 마스킹 처리가 필수입니다.
+4. [P1 Major] L21 None 반환 대신 도메인 PaymentGatewayError 예외를 발생시켜 호출부가 트랜잭션을 롤백할 수 있게 해주세요.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">import logging
+import random
+import time
+import uuid
+import requests
+
+logger = logging.getLogger(__name__)
+
+class PaymentGatewayError(Exception): pass
+
+class PaymentClient:
+    def __init__(self, api_url: str, timeout: tuple[float, float] = (3.0, 10.0)):
+        self.api_url = api_url
+        self.timeout = timeout
+        self.session = requests.Session()
+
+    def charge(self, order_id: str, amount: int, card_number: str, max_retries: int = 3) -> dict:
+        masked_card = f"****-****-****-{card_number[-4:]}"
+        idempotency_key = f"order-{order_id}-{uuid.uuid4().hex[:8]}"
+        headers = {"Idempotency-Key": idempotency_key, "Content-Type": "application/json"}
+        payload = {"order_id": order_id, "amount": amount, "card_number": card_number}
+
+        for attempt in range(max_retries):
+            try:
+                resp = self.session.post(
+                    f"{self.api_url}/v1/charge",
+                    json=payload,
+                    headers=headers,
+                    timeout=self.timeout
+                )
+                resp.raise_for_status()
+                return resp.json()
+            except requests.RequestException as exc:
+                sleep_sec = (2 ** attempt) + random.uniform(0.1, 0.5)  # Full Jitter
+                logger.warning("Charge attempt %d failed for order %s (card %s): %s", attempt + 1, order_id, masked_card, exc)
+                if attempt == max_retries - 1:
+                    raise PaymentGatewayError(f"Payment failed for order {order_id}") from exc
+                time.sleep(sleep_sec)</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 32: M2: 사용자 지갑 이체 동시성 원장 (User Wallet Transfer) -->
+    <section class="slide" id="slide-32" data-title="M2: 사용자 지갑 이체 동시성 원장 (User Wallet Transfer)" data-category="Mock Scenario" data-level="mid">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F25</span>
+        <span class="badge badge-mid">INTERMEDIATE</span>
+        <span class="badge badge-core">F25</span>
+      </div>
+      <h2 class="slide-title">M2: 사용자 지갑 이체 동시성 원장 (User Wallet Transfer)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="mid">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 사용자 지갑 이체 및 동시성 제어 원장</h4>
+      <span class="badge badge-mid">INTERMEDIATE</span>
+    </div>
+<p><strong>[PR #405] 유저 간 포인트 지갑 이체(Transfer) 및 잔액 차감 API</strong><br>
+        보내는 사람의 잔고를 확인하고 차감한 뒤, 받는 사람의 잔고를 증가시키는 이체 서비스입니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (wallet_service.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">class UserWallet:
+    def transfer(self, from_user_id, to_user_id, amount):
+        """두 사용자 간 잔액 이체 비즈니스 로직"""
+        from_wallet = db.get_wallet(from_user_id)
+        to_wallet = db.get_wallet(to_user_id)
+        
+        # 1. 잔액 검증
+        if from_wallet.balance < amount:
+            raise ValueError("Insufficient balance")
+            
+        # 2. 잔액 수정 (Race Condition & No Transaction!)
+        from_wallet.balance -= amount
+        db.save_wallet(from_wallet)
+        
+        # 만약 여기서 네트워크 장애나 크래시가 발생하면? (돈이 증발함!)
+        to_wallet.balance += amount
+        db.save_wallet(to_wallet)
+        
+        return True</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>데이터베이스 트랜잭션 부재</strong>: 출금 후 입금 직전에 서버 크래시 발생 시 보낸 사람 돈은 깎이고 받는 사람 돈은 안 들어와 잔액이 증발함.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>동시성 레이스 컨디션 (Lost Update)</strong>: 잔액 조회(Read)와 저장(Write) 사이에 락이 없어, 동시 요청 인입 시 마이너스 잔고(Double Spending) 발생.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>데드락 위험 (Lock Ordering)</strong>: 사용자 A → B 이체와 B → A 이체가 동시 발생할 때 락 획득 순서가 정렬되지 않으면 상호 대기 교착 상태(Deadlock) 발생.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>자기 자신에게 이체 검증 누락</strong>: <code>from_user_id == to_user_id</code> 예외 가드 누락.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">지갑 이체 서비스 PR 리뷰 전달드립니다! 금융 데이터 무결성 보장을 위해 P0 블로커 수정이 반드시 선행되어야 합니다.
+1. [P0 Blocking] L9 트랜잭션 원자성(ACID) 부재: db.transaction() 컨텍스트로 묶지 않으면 중간 실패 시 출금만 되고 입금되지 않아 돈이 소멸합니다.
+2. [P0 Blocking] L6 동시성 Race Condition: 동일 사용자가 동시 2건의 이체를 요청하면 잔고 검증을 둘 다 통과하여 잔액이 음수가 됩니다. SELECT ... FOR UPDATE 비관적 락이나 원자적 쿼리가 필수입니다.
+3. [P1 Major] L3 데드락 방지 락 순서화: A->B, B->A 동시 이체 시 데드락이 발생할 수 있으므로 user_id 오름차순으로 락을 정렬해 획득해야 합니다.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">from decimal import Decimal
+
+class InsufficientBalanceError(Exception): pass
+
+class UserWallet:
+    def transfer(self, from_user_id: int, to_user_id: int, amount: Decimal) -> bool:
+        if from_user_id == to_user_id:
+            raise ValueError("Cannot transfer to the same account")
+        if amount <= Decimal("0"):
+            raise ValueError("Transfer amount must be positive")
+
+        # 데드락 방지를 위한 일관된 락 획득 순서 (Lock Ordering by ID)
+        first_id, second_id = sorted([from_user_id, to_user_id])
+
+        with db.transaction():
+            # SELECT FOR UPDATE로 행 단위 비관적 락 획득
+            wallets = {
+                w.user_id: w for w in db.get_wallets_for_update([first_id, second_id])
+            }
+            from_wallet = wallets[from_user_id]
+            to_wallet = wallets[to_user_id]
+
+            if from_wallet.balance < amount:
+                raise InsufficientBalanceError(f"User {from_user_id} has insufficient funds")
+
+            from_wallet.balance -= amount
+            to_wallet.balance += amount
+
+            db.save_wallet(from_wallet)
+            db.save_wallet(to_wallet)
+            db.record_ledger_entry(from_user_id, to_user_id, amount)
+
+        return True</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 33: M3: 대용량 이벤트 로그 수집 파이프라인 (Event Log Pipeline) -->
+    <section class="slide" id="slide-33" data-title="M3: 대용량 이벤트 로그 수집 파이프라인 (Event Log Pipeline)" data-category="Mock Scenario" data-level="mid">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F26</span>
+        <span class="badge badge-mid">INTERMEDIATE</span>
+        <span class="badge badge-core">F26</span>
+      </div>
+      <h2 class="slide-title">M3: 대용량 이벤트 로그 수집 파이프라인 (Event Log Pipeline)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="mid">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 대용량 서버 이벤트 로그 수집 및 통계 ETL</h4>
+      <span class="badge badge-mid">INTERMEDIATE</span>
+    </div>
+<p><strong>[PR #410] 일일 50GB 클릭스트림 로그 파일 파싱 및 활성 세션 통계 집계</strong><br>
+        대용량 웹 서버 액세스 로그 파일을 파싱하여 특정 날짜 범위의 에러 이벤트 빈도를 분석합니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (event_pipeline.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">from datetime import datetime
+
+class LogPipeline:
+    def process_logs(self, log_file_path, target_events):
+        """50GB 대용량 로그 파일을 전체 파싱하는 파이프라인"""
+        f = open(log_file_path, "r")
+        lines = f.readlines()  # OOM: 50GB 전체를 힙 메모리에 적재하여 프로세스 폭발!
+        
+        event_counts = {}
+        for line in lines:
+            parts = line.split("|")
+            timestamp = datetime.strptime(parts[0], "%Y-%m-%d %H:%M:%S")  # naive datetime!
+            event_name = parts[1]
+            
+            # target_events가 리스트일 때 O(N^2) 탐색 병목 발생!
+            if event_name in target_events:
+                if event_name not in event_counts:
+                    event_counts[event_name] = 0
+                event_counts[event_name] += 1
+                
+        f.close()
+        return event_counts</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>메모리 고갈 크래시 (OOM)</strong>: <code>f.readlines()</code>는 전체 파일 내용을 메모리 리스트로 올리므로, 50GB 파일 인입 시 즉시 <strong>OOM 메모리 킬</strong> 발생. 제너레이터 스트리밍 필수.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>파일 핸들 누수</strong>: 중간 파싱 실패 시 <code>f.close()</code>가 누락됨. <code>with open()</code> 필수.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>$O(N^2)$ 리스트 멤버십 검색 병목</strong>: <code>event_name in target_events</code>가 리스트면 수억 개 로그 순회 시 극심한 CPU 지연. <code>set</code> 변환($O(1)$) 필요.</li>
+        <li class="checkpoint-item"><span class="p-tag p2">P2 Suggestion</span> <strong>collections.Counter 미활용</strong>: 수동 딕셔너리 카운팅 대신 <code>Counter</code> 활용 권장.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">로그 처리 파이프라인 PR 리뷰입니다! 대용량 ETL 파이프라인의 핵심인 메모리 안전성과 시간 복잡도 개선점입니다.
+1. [P0 Blocking] L6 f.readlines() 메모리 폭발: 50GB 파일 전체를 리스트로 읽으면 OOM(Out of Memory)으로 서버가 크래시됩니다. for line in f: 제너레이터 라인 단위 스트리밍으로 변경해야 메모리 사용량이 O(1)로 유지됩니다.
+2. [P0 Blocking] L5 with open() 사용: 파싱 에러 시 FD 누수를 방지해 주세요.
+3. [P1 Major] L14 target_events 검색 복잡도: set(target_events)로 변환하여 멤버십 조회를 O(1)로 최적화해 주세요.
+4. [P2 Suggestion] collections.Counter를 사용하면 간결하고 고성능으로 집계할 수 있습니다.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">from collections import Counter
+from collections.abc import Iterable, Iterator
+from datetime import datetime, timezone
+from pathlib import Path
+
+class LogPipeline:
+    def parse_events(self, file_path: Path) -> Iterator[tuple[datetime, str]]:
+        """제너레이터를 활용하여 메모리 점유율을 O(1)로 유지하는 스트리밍 파서"""
+        with file_path.open("r", encoding="utf-8") as f:
+            for line_no, raw_line in enumerate(f, start=1):
+                line = raw_line.strip()
+                if not line:
+                    continue
+                try:
+                    parts = line.split("|")
+                    ts = datetime.fromisoformat(parts[0]).replace(tzinfo=timezone.utc)
+                    yield ts, parts[1].strip()
+                except (ValueError, IndexError):
+                    continue
+
+    def process_logs(self, log_file_path: str | Path, target_events: Iterable[str]) -> Counter[str]:
+        target_set = set(target_events)  # O(1) 멤버십 검사를 위한 해시셋
+        path = Path(log_file_path)
+        
+        counter = Counter(
+            event for _, event in self.parse_events(path)
+            if event in target_set
+        )
+        return counter</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 34: E1: 비동기 크롤러 & 워커 파이프라인 (Async Crawler) -->
+    <section class="slide" id="slide-34" data-title="E1: 비동기 크롤러 & 워커 파이프라인 (Async Crawler)" data-category="Mock Scenario" data-level="sr">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F27</span>
+        <span class="badge badge-sr">EXPERT</span>
+        <span class="badge badge-core">F27</span>
+      </div>
+      <h2 class="slide-title">E1: 비동기 크롤러 & 워커 파이프라인 (Async Crawler)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="sr">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 고성능 비동기 크롤러 & 워커 파이프라인</h4>
+      <span class="badge badge-sr">EXPERT</span>
+    </div>
+<p><strong>[PR #501] 비동기 수만 개 URL 크롤링 및 파싱 분산 워커</strong><br>
+        수만 개의 웹 문서를 크롤링하기 위해 <code>asyncio</code> 기반으로 작성된 고성능 데이터 수집 워커입니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (async_crawler.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">import asyncio
+import requests  # 블로킹 동기 라이브러리 사용!
+
+class AsyncWorker:
+    async def crawl(self, urls):
+        """수만 개 URL을 수집하는 비동기 워커"""
+        for url in urls:
+            # 1. 이벤트 루프 블로킹: async 내에서 sync requests 호출!
+            # 2. 참조 보존 없는 백그라운드 태스크 -> GC가 도중에 수거해 버림!
+            # 3. 무제한 동시성: 수만 개 소켓을 동시 오픈하여 OS FD 고갈!
+            asyncio.create_task(self._fetch(url))
+            
+    async def _fetch(self, url):
+        resp = requests.get(url)  # 이벤트 루프 전체 멈춤!
+        await self._save_db(resp.text)
+        
+    async def _save_db(self, data):
+        await asyncio.sleep(0.01)</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>이벤트 루프 동기 블로킹</strong>: 비동기 코루틴 내부에서 동기 블로킹 라이브러리인 <code>requests.get()</code>을 호출하여 <strong>이벤트 루프 전체가 정지</strong>되고 다른 모든 동시 작업 중단.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>태스크 참조 유실 및 GC 조기 수거</strong>: <code>asyncio.create_task()</code> 반환값을 변수/세트에 보존하지 않아, 실행 도중 <strong>가비지 컬렉터(GC)에 의해 태스크가 소멸</strong>되어 작업이 증발함.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>무제한 동시성 (Unbounded Concurrency)</strong>: 세마포어(Semaphore) 상한 없이 수만 개 태스크를 즉시 띄워 운영체제 소켓 및 FD 한도 초과(Too many open files)로 크래시.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>구조적 동시성 및 취소 전파 부재</strong>: <code>asyncio.TaskGroup</code>을 적용하여 우아한 에러 핸들링 및 자원 정리 필요.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">비동기 크롤러 PR 리뷰입니다. 런타임 이벤트 루프의 안정성과 대규모 트래픽 처리를 위해 핵심 피드백 공유합니다.
+1. [P0 Blocking] L13 requests.get 이벤트 루프 블로킹: httpx.AsyncClient 또는 aiohttp를 사용해야 논블로킹 I/O가 유지됩니다. 동기 코드를 써야 한다면 asyncio.to_thread()로 감싸야 합니다.
+2. [P0 Blocking] L9 태스크 GC 유실: asyncio.create_task()의 참조를 보관하지 않으면 실행 도중 GC가 수거합니다. Python 3.11+ asyncio.TaskGroup을 사용해 스코프 내 완료를 보장해야 합니다.
+3. [P1 Major] L9 무제한 동시성: asyncio.Semaphore(100)으로 동시 연결 수를 제한하여 소켓 고갈과 타겟 서버 과부하를 방지해야 합니다.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">import asyncio
+import logging
+from collections.abc import Sequence
+import httpx
+
+logger = logging.getLogger(__name__)
+
+class AsyncWorker:
+    def __init__(self, max_concurrency: int = 50, timeout: float = 10.0):
+        self.semaphore = asyncio.Semaphore(max_concurrency)
+        self.timeout = timeout
+
+    async def _fetch(self, client: httpx.AsyncClient, url: str) -> str | None:
+        async with self.semaphore:
+            try:
+                resp = await client.get(url, timeout=self.timeout)
+                resp.raise_for_status()
+                return resp.text
+            except httpx.HTTPError as exc:
+                logger.warning("Failed to crawl %s: %s", url, exc)
+                return None
+
+    async def crawl(self, urls: Sequence[str]) -> list[str]:
+        results: list[str] = []
+        async with httpx.AsyncClient() as client:
+            # Python 3.11+ 구조적 동시성 TaskGroup 적용
+            async with asyncio.TaskGroup() as tg:
+                tasks = [tg.create_task(self._fetch(client, url)) for url in urls]
+
+        for task in tasks:
+            res = task.result()
+            if res is not None:
+                results.append(res)
+        return results</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 35: E2: 멀티서비스 TTL 캐시 데코레이터 (Cache Decorator) -->
+    <section class="slide" id="slide-35" data-title="E2: 멀티서비스 TTL 캐시 데코레이터 (Cache Decorator)" data-category="Mock Scenario" data-level="sr">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F28</span>
+        <span class="badge badge-sr">EXPERT</span>
+        <span class="badge badge-core">F28</span>
+      </div>
+      <h2 class="slide-title">E2: 멀티서비스 TTL 캐시 데코레이터 (Cache Decorator)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="sr">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 범용 인메모리 캐시 및 메모이제이션 데코레이터</h4>
+      <span class="badge badge-sr">EXPERT</span>
+    </div>
+<p><strong>[PR #504] 고성능 함수/메서드 범용 TTL 메모이제이션 데코레이터</strong><br>
+        비즈니스 API 응답 속도 향상을 위해 함수와 인스턴스 메서드에 두루 적용할 수 있는 캐시 데코레이터입니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (cache_decorators.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">import time
+from functools import wraps
+
+def memoize(ttl=60):
+    cache = {}  # 크기 상한(maxsize) 없는 딕셔너리 -> 무한 메모리 누수!
+    
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # 1. unhashable 인자(dict, list) 들어오면 TypeError 크래시!
+            # 2. 인스턴스 메서드에 적용 시 args[0](self)을 강참조하여 인스턴스 영구 누수!
+            # 3. 비동기 코루틴 함수에 적용 시 반환된 coroutine 객체를 재사용하려다 크래시!
+            key = (args, tuple(kwargs.items()))
+            now = time.time()
+            
+            if key in cache:
+                val, expire = cache[key]
+                if now < expire:
+                    return val
+                    
+            result = func(*args, **kwargs)
+            cache[key] = (result, now + ttl)
+            return result
+        return wrapper
+    return decorator</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>바운드 메서드 <code>self</code> 강참조로 인한 영구 메모리 누수</strong>: 데코레이터를 클래스 메서드에 적용하면 <code>args[0]</code>인 인스턴스 객체가 데코레이터 클로저의 전역 캐시에 영구 잔류하여 GC 수거 불가.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>Unhashable Arguments 크래시</strong>: 인자로 <code>dict</code>나 <code>list</code>가 전달되면 <code>TypeError: unhashable type</code>으로 런타임 즉시 크래시.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>캐시 크기 상한(maxsize) 부재</strong>: 유니크한 파라미터가 유입될 때 캐시가 무한히 팽창하여 결국 OOM 발생. LRU 퇴출 정책 필요.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>비동기 코루틴(async def) 미지원</strong>: <code>async def</code> 함수에 적용 시 이미 소비된 코루틴 객체를 반환하여 <code>RuntimeError: cannot reuse already awaited coroutine</code> 발생.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">캐시 데코레이터 구현 감사드립니다! 시니어 관점에서 CPython 메모리 모델 및 타입 안전성을 위한 리뷰 남깁니다.
+1. [P0 Blocking] L11 메서드 self 강참조 누수: args[0]이 self일 때 전역 cache에 영구 등록되어 객체 생명주기가 프로세스와 묶입니다. weakref 기반 WeakKeyDictionary를 쓰거나 메서드 전용 디스크립터를 분리해야 합니다.
+2. [P0 Blocking] L11 unhashable 인자: 키 생성 시 json.dumps(..., sort_keys=True)나 해시 가능 튜플로 정규화하지 않으면 딕셔너리 인자 인입 시 500 에러가 납니다.
+3. [P1 Major] L5 maxsize 부재: functools.lru_cache처럼 크기 상한과 LRU 방출 정책을 두어야 OOM을 방지할 수 있습니다.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">import collections
+import inspect
+import json
+import time
+from functools import wraps
+
+class TTLCache:
+    def __init__(self, maxsize: int = 1024, ttl: float = 60.0):
+        self.maxsize = maxsize
+        self.ttl = ttl
+        self._data: collections.OrderedDict[str, tuple[any, float]] = collections.OrderedDict()
+
+    def get(self, key: str):
+        if key not in self._data: return None
+        val, expire = self._data[key]
+        if time.time() > expire:
+            del self._data[key]
+            return None
+        self._data.move_to_end(key)
+        return val
+
+    def set(self, key: str, val):
+        if len(self._data) >= self.maxsize:
+            self._data.popitem(last=False)
+        self._data[key] = (val, time.time() + self.ttl)
+
+def memoize(maxsize: int = 1024, ttl: float = 60.0):
+    cache = TTLCache(maxsize=maxsize, ttl=ttl)
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # 인자 안전 정규화 (unhashable 방어)
+            try:
+                key = json.dumps({"a": args, "k": kwargs}, sort_keys=True, default=str)
+            except Exception:
+                key = str((args, kwargs))
+
+            cached_val = cache.get(key)
+            if cached_val is not None:
+                return cached_val
+
+            result = func(*args, **kwargs)
+            cache.set(key, result)
+            return result
+        return wrapper
+    return decorator</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 36: E3: 보안 격리 동적 리포트 생성 엔진 (Report Sandbox) -->
+    <section class="slide" id="slide-36" data-title="E3: 보안 격리 동적 리포트 생성 엔진 (Report Sandbox)" data-category="Mock Scenario" data-level="sr">
+      <div class="slide-content-wrapper">
+  <div class="slide-header">
+    <div>
+      <div class="slide-meta">
+        <span class="slide-category">Mock Interview F29</span>
+        <span class="badge badge-sr">EXPERT</span>
+        <span class="badge badge-core">F29</span>
+      </div>
+      <h2 class="slide-title">E3: 보안 격리 동적 리포트 생성 엔진 (Report Sandbox)</h2>
+    </div>
+  </div>
+<div class="scenario-card" data-level="sr">
+  <div class="scenario-context">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+      <h4 style="margin: 0;">📋 티켓 &amp; PR 맥락: 사용자 정의 스크립트 실행 및 PDF 리포트 엔진</h4>
+      <span class="badge badge-sr">EXPERT</span>
+    </div>
+<p><strong>[PR #509] 동적 파이썬 리포트 스크립트 실행 및 결과 직렬화 엔진</strong><br>
+        사용자가 업로드한 템플릿 스크립트를 백그라운드 프로세스로 실행하고 결과를 피클(pickle)로 수집하는 리포트 서브시스템입니다.</p>
+  </div>
+
+  <div class="scenario-pr-code">
+    <div class="code-header">
+      <span>📄 PR 제출 코드 (report_sandbox.py)</span>
+      <button class="btn-copy-code">복사</button>
+    </div>
+    <pre><code class="lang-python">import subprocess
+import pickle
+import os
+
+class ReportEngine:
+    def generate_report(self, script_name, params):
+        """사용자가 지정한 리포트 스크립트를 실행하여 데이터 추출"""
+        # 1. 경로 순회(Path Traversal): ../../etc/passwd 접근 가능
+        script_path = os.path.join("/opt/reports", script_name)
+        
+        # 2. 쉘 인젝션: shell=True와 f-string 포맷팅 결합으로 RCE 발생
+        cmd = f"python {script_path} --params '{params}'"
+        subprocess.run(cmd, shell=True, check=True)
+        
+        # 3. 신뢰할 수 없는 pickle 역직렬화 공격 -> RCE
+        out_file = f"/tmp/{script_name}.pkl"
+        with open(out_file, "rb") as f:
+            data = pickle.loads(f.read())  # 악의적 페이로드 역직렬화 시 쉘 탈취!
+            
+        return data</code></pre>
+  </div>
+
+  <details class="checkpoints" open>
+    <summary>🔍 리뷰 체크포인트 (P0~P3 Checkpoints)</summary>
+    <div class="details-body">
+      <ul class="checkpoint-list">
+<li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>쉘 인젝션 (<code>shell=True</code> RCE)</strong>: <code>params</code>에 <code>'; rm -rf /; '</code> 같은 메타문자가 주입되면 호스트 시스템에서 임의 코드가 실행됨.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>안전하지 않은 <code>pickle.loads</code> 역직렬화</strong>: <code>pickle</code>은 역직렬화 시 <code>__reduce__</code> 훅을 통해 임의 파이썬 코드를 실행하므로, 공격자가 변조된 피클을 업로드하면 시스템 장악. <code>json</code> 필수.</li>
+        <li class="checkpoint-item"><span class="p-tag p0">P0 Blocking</span> <strong>경로 순회 (Path Traversal)</strong>: <code>script_name</code>에 <code>../../</code>를 전달할 때 검증하지 않아 호스트 임의 파일 실행/접근 가능.</li>
+        <li class="checkpoint-item"><span class="p-tag p1">P1 Major</span> <strong>프로세스 타임아웃 및 자원 상한 부재</strong>: 무한 루프 스크립트 실행 시 CPU 100% 점유. <code>timeout</code> 필수.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="feedback">
+    <summary>💬 모범 리뷰 피드백 (Model Feedback)</summary>
+    <div class="details-body">
+      <div class="feedback-quote">보안 아키텍처 관점에서 배포 차단(P0 Blocking)이 필요한 치명적 취약점 리뷰 공유합니다.
+1. [P0 Blocking] L11 shell=True RCE: 사용자 인자가 쉘 인터프리터를 거쳐 즉시 실행됩니다. shell=False 및 인자 리스트로 전환해야 합니다.
+2. [P0 Blocking] L16 pickle.loads 원격 코드 실행: pickle은 절대 신뢰할 수 없는 데이터에 사용해선 안 됩니다. json.loads()로 안전하게 직렬화 포맷을 교체해야 합니다.
+3. [P0 Blocking] L8 Path Traversal: Path(script_path).resolve() 후 base 디렉토리 내부인지 엄격히 검증해야 합니다.
+4. [P1 Major] 타임아웃 및 샌드박스 격리가 필요합니다.</div>
+    </div>
+  </details>
+
+  <details class="refactored">
+    <summary>✨ 리팩토링 개선 코드 (Refactored Solution)</summary>
+    <div class="details-body">
+      <div class="code-header">
+        <span>✅ Production Refactored Code</span>
+        <button class="btn-copy-code">복사</button>
+      </div>
+      <pre><code class="lang-python">import json
+import subprocess
+from pathlib import Path
+
+class SecurityError(Exception): pass
+
+class ReportEngine:
+    BASE_DIR = Path("/opt/reports").resolve()
+
+    def generate_report(self, script_name: str, params: dict, timeout_sec: float = 30.0) -> dict:
+        # 1. 경로 순회(Path Traversal) 엄격 방어
+        target_path = (self.BASE_DIR / script_name).resolve()
+        if not target_path.is_relative_to(self.BASE_DIR):
+            raise SecurityError(f"Directory traversal attack detected: {script_name}")
+        if not target_path.is_file():
+            raise FileNotFoundError(f"Report script not found: {script_name}")
+
+        params_json = json.dumps(params)
+        
+        # 2. shell=False, 인자 리스트 전달 및 타임아웃 설정
+        try:
+            result = subprocess.run(
+                ["python", "-S", str(target_path), "--params", params_json],
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                shell=False,
+                check=True
+            )
+            # 3. 안전한 JSON 역직렬화 (Pickle 완전 제거)
+            return json.loads(result.stdout)
+        except subprocess.TimeoutExpired as exc:
+            raise TimeoutError(f"Report execution timed out after {timeout_sec}s") from exc
+        except subprocess.CalledProcessError as exc:
+            raise RuntimeError(f"Script failed with code {exc.returncode}: {exc.stderr}") from exc</code></pre>
+    </div>
+  </details>
+</div>
+</div>
+    </section>
+
+
+    <!-- Slide 37: 코드 리뷰 인터뷰 합격 전략 & 에티켓 플레이북 -->
+    <section class="slide" id="slide-37" data-title="코드 리뷰 인터뷰 합격 전략 & 에티켓 플레이북" data-category="Playbook" data-level="all">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Interview Playbook</span>
+                <span class="badge badge-core">CAREER</span>
+              </div>
+              <h2 class="slide-title">코드 리뷰 인터뷰 합격 전략 &amp; 엔지니어링 에티켓</h2>
+            </div>
+          </div>
+          <p class="lead-text">
+            기술적으로 버그를 찾는 것만큼 중요한 것은 <strong>동료로서 함께 일하고 싶은 엔지니어링 에티켓과 협업 커뮤니케이션</strong>입니다.
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1rem;">
+            <div class="info-box">
+              <h4>🎯 인터뷰 시작 전 면접관에게 던져야 할 3대 질문</h4>
+              <ol>
+                <li><strong>비즈니스 맥락과 트래픽 규모</strong>: "이 서비스의 예상 일일 트래픽(QPS)과 데이터 볼륨 규모는 어떻게 되나요?"</li>
+                <li><strong>실행 환경 및 런타임 제약</strong>: "파이썬 몇 버전(3.10~3.12+)에서 동작하며, 분산 환경인가요 아니면 단일 인스턴스인가요?"</li>
+                <li><strong>테스트 및 CI 가드레일</strong>: "현재 팀에서 mypy strict나 Ruff 린트, 단위 테스트 커버리지 기준이 어떻게 마련되어 있나요?"</li>
+              </ol>
+            </div>
+            <div class="info-box success">
+              <h4>💡 면접관을 감동시키는 시니어 커뮤니케이션 공식</h4>
+              <ul>
+                <li><strong>공감과 인정(Praise)</strong>: "전반적으로 깔끔하게 구조화되었네요! 특히 예외 처리 흐름이 명확합니다."</li>
+                <li><strong>코드 비판 vs 사람 비판 분리</strong>: "당신이 짠 코드"가 아니라 "이 구현 방식은"으로 주어를 객관화.</li>
+                <li><strong>제도적 개선책 제시</strong>: "단순히 이 PR을 고치는 것 외에도, 팀 CI에 Ruff <code>B006</code> 규칙을 추가하면 앞으로 팀 전체의 동종 실수를 원천 방지할 수 있습니다."</li>
+                <li>공식 문서 참조 링크 안내: <a href="https://docs.python.org/3/reference/datamodel.html" target="_blank" rel="noopener">Python Data Model Docs</a>, <a href="https://peps.python.org/pep-0008/" target="_blank" rel="noopener">PEP 8 Guide</a>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+    </section>
+
+
+    <!-- Slide 38: Python 코드 리뷰 마스터 10계명 & 마무리 치트시트 -->
+    <section class="slide" id="slide-38" data-title="Python 코드 리뷰 마스터 10계명 & 마무리 치트시트" data-category="Conclusion" data-level="all">
+      <div class="slide-content-wrapper">
+          <div class="slide-header">
+            <div>
+              <div class="slide-meta">
+                <span class="slide-category">Conclusion</span>
+                <span class="badge badge-core">CHEATSHEET</span>
+              </div>
+              <h2 class="slide-title">Python 코드 리뷰 마스터 10계명 (Cheat Sheet)</h2>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div class="info-box danger">
+              <h4>🚨 반드시 잡아야 할 치명적 P0 체크리스트</h4>
+              <ul>
+                <li>1. 기본 인자로 가변 객체(<code>[]</code>, <code>{}</code>) 금지 → <code>None</code> 센티넬 적용.</li>
+                <li>2. Bare <code>except: pass</code> 금지 → 구체적 예외 포획 및 <code>logging</code>.</li>
+                <li>3. 컬렉션 순회 중 제자리 수정 금지 → 리스트 컴프리헨션 생성.</li>
+                <li>4. 자원 해제에 <code>close()</code> 방치 금지 → <code>with</code> 컨텍스트 매니저 필수.</li>
+                <li>5. SQL/쉘 f-string 결합 금지 → 파라미터 바인딩 &amp; <code>shell=False</code>.</li>
+              </ul>
+            </div>
+            <div class="info-box success">
+              <h4>✨ 시니어로 도약하는 모던 베스트 프랙티스</h4>
+              <ul>
+                <li>6. 화폐/금융 연산은 <code>float</code> 금지 → <code>Decimal</code> 필수.</li>
+                <li>7. 시간은 naive 금지 → <code>datetime.now(timezone.utc)</code> UTC 저장.</li>
+                <li>8. CPU 연산은 <code>threading</code> 금지 → <code>ProcessPoolExecutor</code> 분리.</li>
+                <li>9. 비동기 동시성은 <code>gather</code> 지양 → <code>asyncio.TaskGroup</code> 구조적 동시성.</li>
+                <li>10. 예외 변환 시 원인 보존 → <code>raise NewError from exc</code> 체이닝.</li>
+              </ul>
+            </div>
+          </div>
+          <div style="margin-top: 2rem; text-align: center;">
+            <p style="font-size: 1.1rem; color: var(--text-heading); font-weight: 600;">
+              축하합니다! 이제 Python 코드 리뷰 인터뷰에서 자신감 있게 최고 레벨의 피드백을 전달할 수 있습니다.
+            </p>
+            <div style="margin-top: 1rem; display: flex; gap: 1rem; justify-content: center;">
+              <button onclick="Deck.goToSlide(0)" style="padding: 0.5rem 1.2rem;">첫 슬라이드로 (Home)</button>
+              <button onclick="Deck.toggleOverviewGrid()" style="padding: 0.5rem 1.2rem;">전체 슬라이드 그리드 (G)</button>
+            </div>
+          </div>
+        </div>
+    </section>
+
+    </div>
+  </main>
+
+  <!-- Overview Grid Modal Overlay -->
+  <div id="overview-grid" class="hidden" role="dialog" aria-label="전체 슬라이드 그리드">
+    <div class="grid-header">
+      <h2>전체 슬라이드 개요 (클릭 시 이동, Esc로 닫기)</h2>
+      <button id="btn-close-grid">✕ 닫기</button>
+    </div>
+    <div class="grid-cards-container" id="grid-container"></div>
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <footer id="bottombar">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <button id="btn-prev" title="이전 (←)">‹ 이전</button>
+      <span id="slide-counter">01 / 38</span>
+      <button id="btn-next" title="다음 (→)">다음 ›</button>
+    </div>
+    <div class="shortcut-legend">
+      <kbd>←</kbd><kbd>→</kbd> 이동 · <kbd>Space</kbd> 다음 · <kbd>G</kbd> 그리드 · <kbd>T</kbd> 목차 · <kbd>D</kbd> 테마 · <kbd>C</kbd> 비교 · <kbd>F</kbd> 전체화면 · <kbd>/</kbd> 검색
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toast" role="alert"></div>
+
+  <!-- Embedded Engine Script -->
+  <script>
+// ==========================================================================
+// 1. SafeStorage Wrapper (file:// Sandbox & Quota Exception Immunity)
+// ==========================================================================
+const SafeStorage = {
+  _memory: {},
+  getItem(key, defaultValue = null) {
+    try {
+      const val = window.localStorage.getItem(key);
+      return val !== null ? val : defaultValue;
+    } catch (e) {
+      return this._memory[key] !== undefined ? this._memory[key] : defaultValue;
+    }
+  },
+  setItem(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      this._memory[key] = String(value);
+      return;
+    }
+  }
+};
+
+// ==========================================================================
+// 2. Pure Client-Side Python Syntax Highlighter & Diff Line Highlighter
+// ==========================================================================
+function highlightCode(rawCode) {
+  if (!rawCode) return "";
+
+  // Normalize line endings
+  const normalized = rawCode.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+
+  // Escape HTML special characters (&, <, >) - leave quotes literal
+  let escaped = normalized
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Token storage with non-colliding NUL-byte delimiters
+  const tokens = [];
+  const pushToken = (cls, content) => {
+    const id = `\x00TOK_${tokens.length}\x00`;
+    tokens.push(`<span class="${cls}">${content}</span>`);
+    return id;
+  };
+
+  // 1. Strings & Comments (matched simultaneously in single pass to prevent nesting)
+  const strOrCommentRegex = /((?:\b[fFrRbBuU]{1,2})?(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'))|(#[^\n]*)/g;
+  escaped = escaped.replace(strOrCommentRegex, (match, strVal, commentVal) => {
+    if (strVal) return pushToken("tok-string", strVal);
+    if (commentVal) return pushToken("tok-comment", commentVal);
+    return match;
+  });
+
+  // 2. Decorators (@decorator, @module.decorator)
+  escaped = escaped.replace(/(@[a-zA-Z_][\w.]*)/g, m => pushToken("tok-decorator", m));
+
+  // 3. Dunder methods & attributes (__init__, __str__, etc.)
+  escaped = escaped.replace(/(__[a-zA-Z0-9_]+__)/g, m => pushToken("tok-dunder", m));
+
+  // 4. Python Keywords & Constants
+  const keywordRegex = /\b(def|class|return|async|await|match|case|import|from|if|else|elif|for|while|try|except|finally|with|raise|pass|lambda|yield|in|is|not|and|or|as|global|nonlocal|assert|True|False|None)\b/g;
+  escaped = escaped.replace(keywordRegex, m => pushToken("tok-keyword", m));
+
+  // 5. Python Built-in Types and Functions
+  const builtinRegex = /\b(print|len|range|list|dict|set|tuple|int|str|float|bool|super|isinstance|issubclass|enumerate|zip|sum|any|all|min|max|filter|map|open|id|type|getattr|setattr|hasattr|Exception|BaseException|ValueError|TypeError|KeyError|IndexError|RuntimeError|PermissionError|ConnectionError|TimeoutError|ExceptionGroup)\b/g;
+  escaped = escaped.replace(builtinRegex, m => pushToken("tok-builtin", m));
+
+  // 6. Numbers (integers, floats, scientific)
+  escaped = escaped.replace(/\b(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g, m => pushToken("tok-number", m));
+
+  // 7. Single-pass linear token re-insertion (O(N), no recursion)
+  escaped = escaped.replace(/\x00TOK_(\d+)\x00/g, (_, idx) => tokens[Number(idx)]);
+
+  // 8. Line Diff Formatting (- and + markers)
+  const lines = escaped.split("\n");
+  const highlightedLines = lines.map(line => {
+    if (line.startsWith("- ") || line.startsWith("--- ")) {
+      return `<span class="diff-line diff-del">${line}</span>`;
+    } else if (line.startsWith("+ ") || line.startsWith("+++ ")) {
+      return `<span class="diff-line diff-add">${line}</span>`;
+    }
+    return line;
+  });
+
+  return highlightedLines.join("\n");
+}
+
+function applySyntaxHighlighting() {
+  const codeBlocks = document.querySelectorAll("pre code.lang-python, pre code");
+  codeBlocks.forEach(block => {
+    // Save raw text for clipboard copying
+    if (!block.dataset.raw) {
+      block.dataset.raw = block.textContent;
+    }
+    block.innerHTML = highlightCode(block.dataset.raw);
+  });
+}
+
+// ==========================================================================
+// 3. Presentation State & Slide Navigation Engine
+// ==========================================================================
+const Deck = {
+  slides: [],
+  currentIndex: 0,
+  totalSlides: 0,
+  currentCompareMode: "split", // "split", "before", "after", "diff"
+
+  init() {
+    this.slides = Array.from(document.querySelectorAll(".slide"));
+    this.totalSlides = this.slides.length;
+    if (this.totalSlides === 0) return;
+
+    // Load initial slide from URL hash or storage (fallback to 0)
+    let initialIndex = 0;
+    const hashMatch = window.location.hash.match(/slide-(\d+)/);
+    if (hashMatch) {
+      initialIndex = parseInt(hashMatch[1], 10) - 1;
+    } else {
+      const stored = SafeStorage.getItem("last_slide", "0");
+      initialIndex = parseInt(stored, 10);
+    }
+
+    initialIndex = Math.max(0, Math.min(initialIndex, this.totalSlides - 1));
+    this.goToSlide(initialIndex, false);
+
+    this.bindEvents();
+    this.renderOverviewGrid();
+    this.renderTOC();
+    applySyntaxHighlighting();
+    initTheme();
+    this.initComparePanes();
+  },
+
+  goToSlide(targetIndex, pushHistory = true) {
+    if (this.totalSlides === 0) return;
+    
+    // Boundary enforcement
+    const totalSlides = this.slides.length;
+    const newIndex = Math.max(0, Math.min(targetIndex, totalSlides - 1));
+    
+    this.slides.forEach((s, idx) => {
+      if (idx === newIndex) {
+        s.classList.add("active");
+        s.setAttribute("aria-hidden", "false");
+      } else {
+        s.classList.remove("active");
+        s.setAttribute("aria-hidden", "true");
+      }
+    });
+
+    this.currentIndex = newIndex;
+    SafeStorage.setItem("last_slide", String(this.currentIndex));
+
+    // Update UI Indicators
+    this.updateCounter();
+    this.updateProgressBar();
+    this.updateChapterLabel();
+
+    // Update URL hash
+    if (pushHistory) {
+      window.location.hash = `slide-${this.currentIndex + 1}`;
+    }
+
+    // Scroll slide to top
+    const currentSlideEl = this.slides[this.currentIndex];
+    if (currentSlideEl) {
+      currentSlideEl.scrollTop = 0;
+    }
+
+    // Highlight TOC and Overview Grid active items
+    this.syncActiveStates();
+  },
+
+  next() {
+    const currentIndex = this.currentIndex;
+    const slides = this.slides;
+    if (currentIndex < slides.length - 1) {
+      this.goToSlide(this.currentIndex + 1);
+    } else {
+      showToast("마지막 슬라이드입니다.");
+    }
+  },
+
+  prev() {
+    if (this.currentIndex > 0) {
+      this.goToSlide(this.currentIndex - 1);
+    } else {
+      showToast("첫 번째 슬라이드입니다.");
+    }
+  },
+
+  updateCounter() {
+    const counterEl = document.getElementById("slide-counter");
+    if (counterEl) {
+      const cur = String(this.currentIndex + 1).padStart(2, "0");
+      const tot = String(this.totalSlides).padStart(2, "0");
+      counterEl.textContent = `${cur} / ${tot}`;
+    }
+  },
+
+  updateProgressBar() {
+    const barEl = document.getElementById("progress-bar");
+    if (barEl && this.totalSlides > 1) {
+      const pct = (this.currentIndex / (this.totalSlides - 1)) * 100;
+      barEl.style.width = `${pct}%`;
+    }
+  },
+
+  updateChapterLabel() {
+    const labelEl = document.getElementById("current-chapter-label");
+    const currentSlide = this.slides[this.currentIndex];
+    if (labelEl && currentSlide) {
+      const cat = currentSlide.getAttribute("data-category") || "General";
+      const title = currentSlide.getAttribute("data-title") || "";
+      labelEl.textContent = `${cat} · ${title}`;
+    }
+  },
+
+  syncActiveStates() {
+    // Grid sync
+    document.querySelectorAll(".grid-card").forEach((card, idx) => {
+      card.classList.toggle("current", idx === this.currentIndex);
+    });
+    // TOC sync
+    document.querySelectorAll(".toc-item").forEach((item, idx) => {
+      item.classList.toggle("current", idx === this.currentIndex);
+    });
+  },
+
+  // ==========================================================================
+  // 4. Before/After Comparison Panes & Tab Controls
+  // ==========================================================================
+  initComparePanes() {
+    const compares = document.querySelectorAll(".code-compare, .compare-container");
+    compares.forEach(cmp => {
+      const tabs = cmp.querySelectorAll(".compare-tab, .tab-btn");
+      tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+          const mode = tab.dataset.tab;
+          cmp.dataset.mode = mode;
+          tabs.forEach(t => t.classList.remove("active"));
+          tab.classList.add("active");
+        });
+      });
+    });
+  },
+
+  toggleGlobalCompareMode() {
+    const modes = ["split", "before", "after", "diff"];
+    let nextIdx = (modes.indexOf(this.currentCompareMode) + 1) % modes.length;
+    this.currentCompareMode = modes[nextIdx];
+
+    document.querySelectorAll(".code-compare, .compare-container").forEach(cmp => {
+      cmp.dataset.mode = this.currentCompareMode;
+      const tabs = cmp.querySelectorAll(".compare-tab, .tab-btn");
+      tabs.forEach(t => {
+        t.classList.toggle("active", t.dataset.tab === this.currentCompareMode);
+      });
+    });
+
+    const modeLabels = {
+      split: "나란히 분할 (Split)",
+      before: "Before (Review 대상)",
+      after: "After (개선안)",
+      diff: "Unified Diff"
+    };
+    showToast(`비교 모드: ${modeLabels[this.currentCompareMode]}`);
+  },
+
+  // ==========================================================================
+  // 5. Overview Grid Modal
+  // ==========================================================================
+  renderOverviewGrid() {
+    const container = document.getElementById("grid-container");
+    if (!container) return;
+    container.innerHTML = "";
+
+    this.slides.forEach((slide, idx) => {
+      const card = document.createElement("div");
+      card.className = `grid-card ${idx === this.currentIndex ? "current" : ""}`;
+      card.dataset.index = idx;
+
+      const num = String(idx + 1).padStart(2, "0");
+      const category = slide.getAttribute("data-category") || "Slide";
+      const title = slide.getAttribute("data-title") || `Slide ${idx + 1}`;
+      const level = slide.getAttribute("data-level") || "";
+
+      card.innerHTML = `
+        <div class="grid-card-num">#${num}</div>
+        <div class="grid-card-title">${title}</div>
+        <div class="grid-card-tag">${category} ${level ? `[${level.toUpperCase()}]` : ""}</div>
+      `;
+
+      card.addEventListener("click", () => {
+        this.goToSlide(idx);
+        this.toggleOverviewGrid(false);
+      });
+
+      container.appendChild(card);
+    });
+  },
+
+  toggleOverviewGrid(forceState) {
+    const gridModal = document.getElementById("overview-grid");
+    if (!gridModal) return;
+
+    const isHidden = gridModal.classList.contains("hidden");
+    const open = forceState !== undefined ? forceState : isHidden;
+
+    if (open) {
+      gridModal.classList.remove("hidden");
+      this.syncActiveStates();
+      // Scroll current card into view
+      const currentCard = gridModal.querySelector(".grid-card.current");
+      if (currentCard) currentCard.scrollIntoView({ block: "center", behavior: "smooth" });
+    } else {
+      gridModal.classList.add("hidden");
+    }
+  },
+
+  // ==========================================================================
+  // 6. TOC Sidebar Drawer
+  // ==========================================================================
+  renderTOC() {
+    const list = document.getElementById("toc-list");
+    const countEl = document.getElementById("toc-count");
+    if (!list) return;
+    list.innerHTML = "";
+    if (countEl) countEl.textContent = `총 ${this.totalSlides}개 슬라이드`;
+
+    this.slides.forEach((slide, idx) => {
+      const item = document.createElement("div");
+      item.className = `toc-item ${idx === this.currentIndex ? "current" : ""}`;
+      const num = String(idx + 1).padStart(2, "0");
+      const title = slide.getAttribute("data-title") || `Slide ${idx + 1}`;
+      item.innerHTML = `<strong>#${num}</strong> <span>${title}</span>`;
+
+      item.addEventListener("click", () => {
+        this.goToSlide(idx);
+        this.toggleTOC(false);
+      });
+
+      list.appendChild(item);
+    });
+  },
+
+  toggleTOC(forceState) {
+    const drawer = document.getElementById("toc-drawer");
+    if (!drawer) return;
+    const isOpen = drawer.classList.contains("open");
+    const open = forceState !== undefined ? forceState : !isOpen;
+    drawer.classList.toggle("open", open);
+  },
+
+  // ==========================================================================
+  // 7. Event Handlers & Shortcuts
+  // ==========================================================================
+  bindEvents() {
+    // Navigation buttons
+    document.getElementById("btn-prev")?.addEventListener("click", () => this.prev());
+    document.getElementById("btn-next")?.addEventListener("click", () => this.next());
+    document.getElementById("btn-grid")?.addEventListener("click", () => this.toggleOverviewGrid());
+    document.getElementById("btn-close-grid")?.addEventListener("click", () => this.toggleOverviewGrid(false));
+    document.getElementById("btn-toc")?.addEventListener("click", () => this.toggleTOC());
+    document.getElementById("btn-compare-mode")?.addEventListener("click", () => this.toggleGlobalCompareMode());
+    document.getElementById("btn-theme")?.addEventListener("click", () => toggleTheme());
+    document.getElementById("btn-fullscreen")?.addEventListener("click", () => toggleFullscreen());
+
+    // Keyboard Navigation Listener
+    window.addEventListener("keydown", (e) => {
+      // Ignore shortcut keys when typing inside search input
+      const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+      if (activeTag === "input" || activeTag === "textarea") {
+        if (e.key === "Escape") {
+          document.activeElement.blur();
+        }
+        return;
+      }
+
+      switch (e.key) {
+        case "ArrowRight":
+        case "PageDown":
+        case " ": // Space
+          e.preventDefault();
+          this.next();
+          break;
+        case "ArrowLeft":
+        case "PageUp":
+          e.preventDefault();
+          this.prev();
+          break;
+        case "Home":
+          e.preventDefault();
+          this.goToSlide(0);
+          break;
+        case "End":
+          e.preventDefault();
+          this.goToSlide(this.totalSlides - 1);
+          break;
+        case "g":
+        case "G":
+          e.preventDefault();
+          this.toggleOverviewGrid();
+          break;
+        case "t":
+        case "T":
+          e.preventDefault();
+          this.toggleTOC();
+          break;
+        case "d":
+        case "D":
+          e.preventDefault();
+          toggleTheme();
+          break;
+        case "f":
+        case "F":
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case "c":
+        case "C":
+          e.preventDefault();
+          this.toggleGlobalCompareMode();
+          break;
+        case "/":
+          e.preventDefault();
+          document.getElementById("quick-search")?.focus();
+          break;
+        case "Escape":
+          this.toggleOverviewGrid(false);
+          this.toggleTOC(false);
+          break;
+      }
+    });
+
+    // Touch Swipe Gestures
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const stage = document.getElementById("stage");
+    if (stage) {
+      stage.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+      }, { passive: true });
+
+      stage.addEventListener("touchend", (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+
+        // Ensure horizontal swipe is dominant and exceeds 50px threshold
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+          if (diffX < 0) {
+            this.next();
+          } else {
+            this.prev();
+          }
+        }
+      }, { passive: true });
+    }
+
+    // Search and Level Filter Handlers
+    const searchInput = document.getElementById("quick-search");
+    searchInput?.addEventListener("input", () => {
+      this.filterSlides();
+    });
+
+    const levelSelect = document.getElementById("level-filter");
+    levelSelect?.addEventListener("change", () => {
+      this.filterSlides();
+    });
+
+    // Code copy buttons
+    document.addEventListener("click", (e) => {
+      if (e.target.matches(".btn-copy-code")) {
+        const btn = e.target;
+        const pre = btn.closest(".code-header")?.nextElementSibling || btn.closest(".compare-pane")?.querySelector("pre");
+        const codeEl = pre?.querySelector("code");
+        if (codeEl) {
+          const raw = codeEl.dataset.raw || codeEl.textContent;
+          copyToClipboard(raw, btn);
+        }
+      }
+    });
+
+    // Hash change sync
+    window.addEventListener("hashchange", () => {
+      const match = window.location.hash.match(/slide-(\d+)/);
+      if (match) {
+        const target = parseInt(match[1], 10) - 1;
+        if (target !== this.currentIndex) {
+          this.goToSlide(target, false);
+        }
+      }
+    });
+  },
+
+  filterSlides() {
+    const searchVal = document.getElementById("quick-search")?.value.trim().toLowerCase() || "";
+    const levelVal = document.getElementById("level-filter")?.value.toLowerCase() || "all";
+
+    // Filter overview grid cards
+    document.querySelectorAll(".grid-card").forEach(card => {
+      const idx = parseInt(card.dataset.index, 10);
+      const slide = this.slides[idx];
+      const title = (slide.getAttribute("data-title") || "").toLowerCase();
+      const content = slide.textContent.toLowerCase();
+      const sLevel = (slide.getAttribute("data-level") || "").toLowerCase();
+
+      const matchesSearch = !searchVal || title.includes(searchVal) || content.includes(searchVal);
+      const matchesLevel = levelVal === "all" || sLevel === levelVal || sLevel === "";
+
+      card.style.display = (matchesSearch && matchesLevel) ? "flex" : "none";
+    });
+
+    // If searching, jump to first matching slide if current doesn't match
+    if (searchVal) {
+      const currentSlide = this.slides[this.currentIndex];
+      const curContent = currentSlide.textContent.toLowerCase();
+      if (!curContent.includes(searchVal)) {
+        const firstMatchIdx = this.slides.findIndex(s => s.textContent.toLowerCase().includes(searchVal));
+        if (firstMatchIdx !== -1) {
+          this.goToSlide(firstMatchIdx);
+        }
+      }
+    }
+  }
+};
+
+// ==========================================================================
+// 8. Theme System (Dark / Light with SafeStorage Persistence)
+// ==========================================================================
+function initTheme() {
+  const savedTheme = SafeStorage.getItem("theme");
+  if (savedTheme) {
+    document.documentElement.setAttribute("data-theme", savedTheme);
+  } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+    document.documentElement.setAttribute("data-theme", "light");
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
+  updateThemeButton();
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  const next = current === "light" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", next);
+  SafeStorage.setItem("theme", next);
+  updateThemeButton();
+  showToast(`테마: ${next === "light" ? "라이트 모드" : "다크 모드"}`);
+}
+
+function updateThemeButton() {
+  const btn = document.getElementById("btn-theme");
+  const current = document.documentElement.getAttribute("data-theme") || "dark";
+  if (btn) {
+    btn.innerHTML = current === "light" ? "🌙" : "☀️";
+    btn.title = `테마 전환 (${current === "light" ? "다크 모드로" : "라이트 모드로"}) (D)`;
+  }
+}
+
+// ==========================================================================
+// 9. Fullscreen & Utilities
+// ==========================================================================
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+function copyToClipboard(text, btnElement) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showCopySuccess(btnElement);
+    }).catch(() => fallbackCopy(text, btnElement));
+  } else {
+    fallbackCopy(text, btnElement);
+  }
+}
+
+function fallbackCopy(text, btnElement) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand("copy");
+    showCopySuccess(btnElement);
+  } catch (err) {
+    showToast("복사 실패");
+  }
+  document.body.removeChild(ta);
+}
+
+function showCopySuccess(btn) {
+  if (!btn) {
+    showToast("클립보드에 복사되었습니다.");
+    return;
+  }
+  const original = btn.textContent;
+  btn.textContent = "✔ 복사됨";
+  btn.style.color = "var(--good)";
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.style.color = "";
+  }, 1800);
+}
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  if (!toast) return;
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2200);
+}
+
+// Initialize on DOM Ready
+document.addEventListener("DOMContentLoaded", () => {
+  Deck.init();
+});
+  </script>
+</body>
+</html>
